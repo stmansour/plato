@@ -7,10 +7,22 @@
 #  zip file. The file is unzipped, and each record is added to
 #  the forex mysql database.
 
+#
+#  Data from the site looks like this:
+#
+# <TICKER>,<DTYYYYMMDD>,<TIME>,<OPEN>,<HIGH>,<LOW>,<CLOSE>
+# EURUSD,20110102,230100,1.3345,1.3345,1.3345,1.3345
+# EURUSD,20110102,230200,1.3344,1.3345,1.3340,1.3342
+# EURUSD,20110102,230300,1.3341,1.3342,1.3341,1.3341
+# EURUSD,20110102,230400,1.3341,1.3343,1.3341,1.3343
+#
+# It is processed by the python program process.py
+#=======================================================================
+
 OS=$(uname)     # we need this because of quirks with Mac OS date(1)
 
 STARTDAY=01
-STARTMONTH=01
+STARTMONTH=02
 STARTYEAR=2011
 STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
@@ -54,6 +66,7 @@ do
     FROOT="${DAY}${MONTH}${y}"
     FNAME="${FROOT}.zip"
     FTEXT="${FROOT}.txt"
+    rm -f "${FNAME}" "${FTEXT}"
     URL=$(printf 'https://www.forexite.com/free_forex_quotes/%4d/%02d/%s' "${YEAR}" "${MONTH}" "${FNAME}")
     echo "URL = ${URL}"
 
