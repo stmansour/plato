@@ -1,0 +1,2 @@
+all:
+	@echo "All done!"
