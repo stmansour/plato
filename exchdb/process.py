@@ -16,15 +16,16 @@ from mysql.connector import errorcode
 #------------------------------------------------------------------------------
 
 # a class to hold a record of foreign exchange info
-class Forex:
-    def __str__(self):
-        return self.Ticker + " " + self.Date.strftime("%d-%b-%Y (%H:%M)") + " " + str(self.Close)
+# class Forex:
+#     def __str__(self):
+#         return self.Ticker + " " + self.Dt.strftime("%d-%b-%Y (%H:%M)") + " " + str(self.Close)
 
 #-------------------------------------------------------------
 #  Connect to the database
 #-------------------------------------------------------------
 try:
     cnx = mysql.connector.connect(user='ec2-user', database='exch', host='localhost')
+    cursor = cnx.cursor()
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
         print("Problem with user name or password")
@@ -34,6 +35,10 @@ except mysql.connector.Error as err:
         print(err)
     sys.exit()
 
+add_exch = ("INSERT INTO Exch "
+            "(Dt, Ticker, Open, High, Low, Close) "
+            "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s)")
+
 #-------------------------------------------------------------
 #  Process the input file...
 #-------------------------------------------------------------
@@ -42,23 +47,32 @@ with open(sys.argv[1]) as csv_file:
     line = 0
     for r in reader:
         if line == 0:
-            print(f'Column names are {", ".join(r)}')
+            # print(f'Column names are {", ".join(r)}')
+            pass
         else:
-            rec = Forex()
-            rec.Ticker = r[0]    # a string
             # the date is in this format: YYYYMMDD
             y = int(r[1][:4])
             m = int(r[1][4:6])
             d = int(r[1][6:])
             H = int(r[2][:2])
             M = int(r[2][2:4])
-            rec.Date = datetime.datetime(y,m,d,H,M)
-            rec.Open = float(r[3])
-            rec.High = float(r[4])
-            rec.Low = float(r[5])
-            rec.Close = float(r[6])
-            print( "rec = ", rec)
-        line += 1
-    # print(f'Processed {line} lines.')
+            rec = {
+                'Ticker' : r[0],
+                'Dt' : datetime.datetime(y,m,d,H,M),
+                'Open' : float(r[3]),
+                'High' : float(r[4]),
+                'Low' : float(r[5]),
+                'Close' : float(r[6]),
+            }
+            # print( "rec = ", rec)
+            try:
+                cursor.execute(add_exch,rec)
+            except mysql.connector.Error as err:
+                print("db error on insert: " + err)
+                sys.exit()
 
+        line += 1
+
+cnx.commit()
+cursor.close()
 cnx.close()

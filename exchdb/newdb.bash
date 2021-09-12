@@ -26,13 +26,20 @@ STARTMONTH=02
 STARTYEAR=2011
 STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
-STOPYEAR=$(date "+%Y")
-STOPMONTH=$(date "+%m")
-STOPDAY=$(date "+%d")
+# STOPYEAR=$(date "+%Y")
+# STOPMONTH=$(date "+%m")
+# STOPDAY=$(date "+%d")
+STOPDAY=05
+STOPMONTH=02
+STOPYEAR=2011
 STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
 
 echo "Start Date:  ${STARTDATE}"
 echo " Stop Date:  ${STOPDATE}"
+
+echo -n "Resetting database... "
+mysql --no-defaults < schema.sql
+echo "done!"
 
 #---------------------------------------------------------------------
 # build a URL of the form:
@@ -45,6 +52,7 @@ offset=86400
 
 while [ "${DATESECS}" -lt "${STOPDATESECS}" ]
 do
+    echo "DATESECS = ${DATESECS}, STOPDATESECS = ${STOPDATESECS}"
     d=$(date -j -f "%s" "${DATESECS}" "+%Y-%m-%d")
     if [ "${OS}" == "Darwin" ]; then
         YEAR="${d:0:4}"
@@ -74,6 +82,11 @@ do
     # Download the data for this date and put it into the database...
     #---------------------------------------------------------------------
     curl -s "${URL}" -o "${FNAME}"
+    retval=$?
+    if [ ${retval} -ne 0 ]; then
+        echo "Problem downloading ${URL}"
+        exit 1
+    fi
     unzip "${FNAME}"
     python3 process.py "${FTEXT}"
     rm -f "${FNAME}" "${FTEXT}"
