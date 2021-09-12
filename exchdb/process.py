@@ -2,6 +2,7 @@ import sys
 import csv
 import datetime
 import mysql.connector
+from mysql.connector import errorcode
 
 #------------------------------------------------------------------------------
 #  This program processes a daily forex file from https://www.forexite.com
@@ -18,6 +19,20 @@ import mysql.connector
 class Forex:
     def __str__(self):
         return self.Ticker + " " + self.Date.strftime("%d-%b-%Y (%H:%M)") + " " + str(self.Close)
+
+#-------------------------------------------------------------
+#  Connect to the database
+#-------------------------------------------------------------
+try:
+    cnx = mysql.connector.connect(user='ec2-user', database='exch', host='localhost')
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("Problem with user name or password")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("Database does not exist")
+    else:
+        print(err)
+    sys.exit()
 
 #-------------------------------------------------------------
 #  Process the input file...
@@ -45,3 +60,5 @@ with open(sys.argv[1]) as csv_file:
             print( "rec = ", rec)
         line += 1
     # print(f'Processed {line} lines.')
+
+cnx.close()
