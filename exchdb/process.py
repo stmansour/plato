@@ -1,7 +1,9 @@
 import sys
 import csv
 import datetime
+import mysql.connector
 
+#------------------------------------------------------------------------------
 #  This program processes a daily forex file from https://www.forexite.com
 #  Data from the site is a csv file formatted as follows:
 #
@@ -10,11 +12,16 @@ import datetime
 # EURUSD,20110102,230200,1.3344,1.3345,1.3340,1.3342
 # EURUSD,20110102,230300,1.3341,1.3342,1.3341,1.3341
 # EURUSD,20110102,230400,1.3341,1.3343,1.3341,1.3343
+#------------------------------------------------------------------------------
 
 # a class to hold a record of foreign exchange info
 class Forex:
-    pass
+    def __str__(self):
+        return self.Ticker + " " + self.Date.strftime("%d-%b-%Y (%H:%M)") + " " + str(self.Close)
 
+#-------------------------------------------------------------
+#  Process the input file...
+#-------------------------------------------------------------
 with open(sys.argv[1]) as csv_file:
     reader = csv.reader(csv_file, delimiter=',')
     line = 0
@@ -30,8 +37,11 @@ with open(sys.argv[1]) as csv_file:
             d = int(r[1][6:])
             H = int(r[2][:2])
             M = int(r[2][2:4])
-            print( f'r[1] = {r[1]}, y={y}, m={m}, d={d}' )
             rec.Date = datetime.datetime(y,m,d,H,M)
-            print("Ticker = ", rec.Ticker, " ", rec.Date)
+            rec.Open = float(r[3])
+            rec.High = float(r[4])
+            rec.Low = float(r[5])
+            rec.Close = float(r[6])
+            print( "rec = ", rec)
         line += 1
-    print(f'Processed {line} lines.')
+    # print(f'Processed {line} lines.')

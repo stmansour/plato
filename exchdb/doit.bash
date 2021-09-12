@@ -76,6 +76,7 @@ do
     curl -s "${URL}" -o "${FNAME}"
     unzip "${FNAME}"
     python3 process.py "${FTEXT}"
+    exit 0
     rm -f "${FNAME}" "${FTEXT}"
 
     DATESECS=$(($DATESECS+$offset))
