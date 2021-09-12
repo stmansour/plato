@@ -45,21 +45,33 @@ echo "done!"
 # build a URL of the form:
 #      https://www.forexite.com/free_forex_quotes/2001/11/011101.zip
 #---------------------------------------------------------------------
-STARTDATESECS=$(date -j -f "%Y-%m-%d" "${STARTDATE}" "+%s")
-STOPDATESECS=$(date -j -f "%Y-%m-%d" "${STOPDATE}" "+%s")
+if [ "${OS}" == "Darwin" ]; then
+    STARTDATESECS=$(date -j -f "%Y-%m-%d" "${STARTDATE}" "+%s")
+    STOPDATESECS=$(date -j -f "%Y-%m-%d" "${STOPDATE}" "+%s")
+else
+    STARTDATESECS=$(date -d "${STARTDATE}" "+%s")
+    STOPDATESECS=$(date -d "${STOPDATE}" "+%s")
+fi
+
+
 DATESECS="${STARTDATESECS}"
 offset=86400
 
-while [ "${DATESECS}" -lt "${STOPDATESECS}" ]
+while [ "${DATESECS}" -lt "${STOPDATESECS}" ];
 do
     echo "DATESECS = ${DATESECS}, STOPDATESECS = ${STOPDATESECS}"
-    d=$(date -j -f "%s" "${DATESECS}" "+%Y-%m-%d")
+    if [ "${OS}" == "Darwin" ]; then
+        d=$(date -j -f "%s" "${DATESECS}" "+%Y-%m-%d")
+    else
+        d=$(date -d "@${DATESECS}" "+%Y-%m-%d")
+    fi
+
     if [ "${OS}" == "Darwin" ]; then
         YEAR="${d:0:4}"
         MONTH="${d:5:2}"
         DAY="${d:8:2}"
     else
-        DAY=$(date "-v"-d "${d}" "+%d")
+        DAY=$(date -d "${d}" "+%d")
         MONTH=$(date -d "${d}" "+%m")
         YEAR=$(date -d "${d}" "+%Y")
     fi
