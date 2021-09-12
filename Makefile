@@ -1,2 +1,2 @@
 all:
-	@echo "All done!"
+	@echo "build completed"
