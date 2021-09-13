@@ -22,9 +22,10 @@
 Initialize () {
     OS=$(uname)     # we need this because of quirks with Mac OS date(1)
 
-    STARTDAY=01
-    STARTMONTH=02
-    STARTYEAR=2011
+    # earlies date is 01-02-2011
+    STARTDAY=30
+    STARTMONTH=07
+    STARTYEAR=2015
     STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
     # STOPYEAR=$(date "+%Y")
@@ -96,7 +97,8 @@ ProcessExch () {
     FNAME="${FROOT}.zip"
     FTEXT="${FROOT}.txt"
     rm -f "${FNAME}" "${FTEXT}"
-    URL=$(printf 'https://www.forexite.com/free_forex_quotes/%4d/%02d/%s' "${YEAR}" "${MONTH}" "${FNAME}")
+
+    URL="https://www.forexite.com/free_forex_quotes/${YEAR}/${MONTH}/${FNAME}"
     echo -n "${URL}  ..."
 
     #---------------------------------------------------------------------
