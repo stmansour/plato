@@ -23,9 +23,9 @@ Initialize () {
     OS=$(uname)     # we need this because of quirks with Mac OS date(1)
 
     # earlies date is 01-02-2011
-    STARTDAY=30
-    STARTMONTH=07
-    STARTYEAR=2015
+    STARTDAY=01
+    STARTMONTH=02
+    STARTYEAR=2011
     STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
     # STOPYEAR=$(date "+%Y")
