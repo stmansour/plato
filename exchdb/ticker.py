@@ -2,9 +2,9 @@ import os
 
 tickers = dict()
 
-tickers["EURUSD"] = 1
-tickers["GBPUSD"] = 1
-tickers["USDCHF"] = 1
+tickers["EURUSD"] = 0
+tickers["GBPUSD"] = 0
+tickers["USDCHF"] = 0
 tickers["USDJPY"] = 0
 tickers["EURGBP"] = 0
 tickers["EURCHF"] = 0
@@ -14,10 +14,10 @@ tickers["GBPJPY"] = 0
 tickers["CHFJPY"] = 0
 tickers["USDCAD"] = 0
 tickers["EURCAD"] = 0
-tickers["AUDUSD"] = 0
+tickers["AUDUSD"] = 1   # on
 tickers["AUDJPY"] = 0
 tickers["NZDUSD"] = 0
-tickers["NZDJPY"] = 0
+tickers["NZDJPY"] = 1   # on
 tickers["XAUUSD"] = 0
 tickers["XAGUSD"] = 0
 tickers["USDCZK"] = 0
@@ -39,7 +39,7 @@ tickers["EURZAR"] = 0
 tickers["XAUEUR"] = 0
 tickers["XAGEUR"] = 0
 tickers["GBPCAD"] = 0
-tickers["GBPAUD"] = 0
+tickers["GBPAUD"] = 1   # on
 tickers["GBPNZD"] = 0
 tickers["AUDCHF"] = 0
 tickers["AUDCAD"] = 0
@@ -54,10 +54,10 @@ tickers["DJIUSD"] = 0
 tickers["SPXUSD"] = 0
 tickers["NDQUSD"] = 0
 tickers["USXUSD"] = 0
-# tickers["USDHKD"] = 0
-# tickers["EURHKD"] = 0
-# tickers["USDMXN"] = 0
-# tickers["EURMXN"] = 0
+tickers["USDHKD"] = 0
+tickers["EURHKD"] = 0
+tickers["USDMXN"] = 0
+tickers["EURMXN"] = 0
 
 def initTicker():
     fname = 'missing.txt'
