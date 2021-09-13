@@ -54,6 +54,10 @@ tickers["DJIUSD"] = 0
 tickers["SPXUSD"] = 0
 tickers["NDQUSD"] = 0
 tickers["USXUSD"] = 0
+# tickers["USDHKD"] = 0
+# tickers["EURHKD"] = 0
+# tickers["USDMXN"] = 0
+# tickers["EURMXN"] = 0
 
 def initTicker():
     fname = 'missing.txt'
@@ -66,9 +70,9 @@ def initTicker():
         line = line.rstrip()
         try:
             x = tickers[line]
-            print( line + " was found in tickers")
+            # print( line + " was found in tickers")
         except KeyError:
-            print( "*** ADDING " + line + " to tickers")
+            # print( "*** ADDING " + line + " to tickers")
             tickers[line] = 0  # it's known to be missing, don't store data
 
 

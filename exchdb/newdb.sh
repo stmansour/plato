@@ -32,13 +32,13 @@ Initialize () {
     # STOPDAY=$(date "+%d")
     STOPDAY=01
     STOPMONTH=02
-    STOPYEAR=2013
+    STOPYEAR=2016
     STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
 
     echo "Start Date:  ${STARTDATE}"
     echo " Stop Date:  ${STOPDATE}"
 
-    echo -n "Resetting database... "
+    echo -n "Resetting exch database... "
     mysql --no-defaults < schema.sql
     echo "done!"
 
@@ -46,7 +46,7 @@ Initialize () {
 }
 
 clean () {
-    rm -rf missing.txt __pycache__
+    rm -rf *.txt __pycache__ *.zip
 }
 
 usage() {
@@ -86,8 +86,6 @@ EXAMPLES:
 ZZEOF
 }
 
-
-
 ProcessExch () {
     #---------------------------------------------------------------------
     # build a URL of the form:                        YYYY MM DDMMYY
@@ -99,7 +97,7 @@ ProcessExch () {
     FTEXT="${FROOT}.txt"
     rm -f "${FNAME}" "${FTEXT}"
     URL=$(printf 'https://www.forexite.com/free_forex_quotes/%4d/%02d/%s' "${YEAR}" "${MONTH}" "${FNAME}")
-    echo "URL = ${URL}"
+    echo -n "${URL}  ..."
 
     #---------------------------------------------------------------------
     # Download the data for this date and put it into the database...
@@ -110,9 +108,11 @@ ProcessExch () {
         echo "Problem downloading ${URL}"
         exit 1
     fi
-    unzip "${FNAME}"
+    unzip -qq "${FNAME}"
+    echo -n "..."
     python3 process.py "${FTEXT}"
     rm -f "${FNAME}" "${FTEXT}"
+    echo "done!"
 }
 
 #===========================================================================
@@ -153,7 +153,6 @@ offset=86400
 
 while [ "${DATESECS}" -lt "${STOPDATESECS}" ];
 do
-    echo "DATESECS = ${DATESECS}, STOPDATESECS = ${STOPDATESECS}"
     if [ "${OS}" == "Darwin" ]; then
         d=$(date -j -f "%s" "${DATESECS}" "+%Y-%m-%d")
     else
@@ -170,9 +169,19 @@ do
         YEAR=$(date -d "${d}" "+%Y")
     fi
 
-    echo "YEAR = ${YEAR}, MONTH = ${MONTH}, DAY = ${DAY}"
+    echo -n "${YEAR}-${MONTH}-${DAY} (${DATESECS}) :: "
+    # echo "DATESECS = ${DATESECS}, STOPDATESECS = ${STOPDATESECS}"
 
     ProcessExch
 
     DATESECS=$(($DATESECS+$offset))
 done
+
+if [ -f "missing.txt" ]; then
+    echo "--------------------------------------------------"
+    echo "               **** NOTICE ****"
+    echo "--------------------------------------------------"
+    echo "There are unhandled tickers:"
+    cat missing.txt
+    echo "--------------------------------------------------"
+fi

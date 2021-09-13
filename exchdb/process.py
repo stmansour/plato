@@ -55,7 +55,7 @@ with open(sys.argv[1]) as csv_file:
             try:
                 x = ticker.tickers[r[0]]
             except KeyError:
-                print(f'{r[0]} was not found in tickers')
+                # print(f'{r[0]} was not found in tickers')
                 ticker.unknownTicker(r[0])
                 sys.exit()
 
