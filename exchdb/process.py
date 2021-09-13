@@ -3,6 +3,7 @@ import csv
 import datetime
 import mysql.connector
 from mysql.connector import errorcode
+import ticker
 
 #------------------------------------------------------------------------------
 #  This program processes a daily forex file from https://www.forexite.com
@@ -39,6 +40,8 @@ add_exch = ("INSERT INTO Exch "
             "(Dt, Ticker, Open, High, Low, Close) "
             "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s)")
 
+ticker.initTicker()
+
 #-------------------------------------------------------------
 #  Process the input file...
 #-------------------------------------------------------------
@@ -47,29 +50,34 @@ with open(sys.argv[1]) as csv_file:
     line = 0
     for r in reader:
         if line == 0:
-            # print(f'Column names are {", ".join(r)}')
             pass
         else:
-            # the date is in this format: YYYYMMDD
-            y = int(r[1][:4])
-            m = int(r[1][4:6])
-            d = int(r[1][6:])
-            H = int(r[2][:2])
-            M = int(r[2][2:4])
-            rec = {
-                'Ticker' : r[0],
-                'Dt' : datetime.datetime(y,m,d,H,M),
-                'Open' : float(r[3]),
-                'High' : float(r[4]),
-                'Low' : float(r[5]),
-                'Close' : float(r[6]),
-            }
-            # print( "rec = ", rec)
             try:
-                cursor.execute(add_exch,rec)
-            except mysql.connector.Error as err:
-                print("db error on insert: " + err)
+                x = ticker.tickers[r[0]]
+            except KeyError:
+                print(f'{r[0]} was not found in tickers')
+                ticker.unknownTicker(r[0])
                 sys.exit()
+
+            if x == 1:
+                y = int(r[1][:4])   # the date is in this format: YYYYMMDD
+                m = int(r[1][4:6])
+                d = int(r[1][6:])
+                H = int(r[2][:2])
+                M = int(r[2][2:4])
+                rec = {
+                    'Ticker' : r[0],
+                    'Dt' : datetime.datetime(y,m,d,H,M),
+                    'Open' : float(r[3]),
+                    'High' : float(r[4]),
+                    'Low' : float(r[5]),
+                    'Close' : float(r[6]),
+                }
+                try:
+                    cursor.execute(add_exch,rec)
+                except mysql.connector.Error as err:
+                    print("db error on insert: " + err)
+                    sys.exit()
 
         line += 1
 
