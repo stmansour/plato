@@ -24,8 +24,8 @@ Initialize () {
 
     # earlies date is 01-02-2011
     STARTDAY=01
-    STARTMONTH=02
-    STARTYEAR=2011
+    STARTMONTH=01
+    STARTYEAR=2019
     STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
     # STOPYEAR=$(date "+%Y")
@@ -33,7 +33,7 @@ Initialize () {
     # STOPDAY=$(date "+%d")
     STOPDAY=01
     STOPMONTH=02
-    STOPYEAR=2016
+    STOPYEAR=2021
     STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
 
     echo "Start Date:  ${STARTDATE}"

@@ -70,6 +70,15 @@ tickers["EURDKK"] = 0
 tickers["EURCZK"] = 0
 tickers["EURHUF"] = 0
 tickers["EURPLN"] = 0
+tickers["ETHUSD"] = 0
+tickers["LTCUSD"] = 0
+tickers["EURUAH"] = 0
+tickers["EURCNH"] = 0
+tickers["BTCEUR"] = 0
+tickers["ETHEUR"] = 0
+tickers["LTCEUR"] = 0
+tickers["USDWMR"] = 0
+tickers["USDWMU"] = 0
 
 def initTicker():
     fname = 'missing.txt'
