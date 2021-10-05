@@ -81,12 +81,25 @@ def exportCSV(fname):
     if os.path.exists(fname):
         fopenopts = 'a'
 
+    dups = {}
+
     try:
         with open(sys.argv[2],fopenopts) as f:
             if fopenopts == 'w':
                 f.write('"Pub Date","Title","Link","Description"\n')
             for i in items:
-                f.write('"{}", "{}", "{}", "{}"\n'.format(i[1],i[2],i[3],i[4]))
+                #-----------------------------------------------------
+                # never write the same article out twice...
+                #-----------------------------------------------------
+                try:
+                    found = dups[i[3]]
+                except Exception as e:
+                    dups[i[3]] = 1
+                    found = 0
+                if found > 0:
+                    print("Duplicate: {}".format(i[2]))
+                else:
+                    f.write('"{}", "{}", "{}", "{}"\n'.format(i[1],i[2],i[3],i[4]))
             f.close()
     except OSError as err:
         sys.exit("error opening/writing to file {}: {}".format(fname,err))
