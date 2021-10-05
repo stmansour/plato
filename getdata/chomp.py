@@ -18,6 +18,13 @@ items = []          # the list of items that are created
 #               line-by-line, making it easier to support arbitrarily large
 #               rss files.
 #
+#               This code looks for the following tags:
+#                   <item>
+#                   <link>
+#                   <title>
+#                   <description>
+#                   <pubDate>
+#
 # l    = the line being processed
 #-----------------------------------------------------------------------------
 def processLine(l):
@@ -50,10 +57,15 @@ def processLine(l):
             # print("TITLE = " + title)
 
         if "<description>" in l:
-            u = re.findall(r"<description>([^<]+)</description>",l)
-            if len(u) > 0:
-                description = u[0]
-            # print("TITLE = " + title)
+            i = l.find("<description>")
+            if i < 0:
+                pass
+            s = l[i+13:-14]    # grab everything past <description> up to </description>
+            i = s.find("<![CDATA[")
+            if i >= 0:
+                s = s[i+9:-3]   # everything after '<![CDATA[' up to ']]>'
+            description = s
+            # print("description = " + description)
 
         if "<pubDate>" in l:
             u = re.findall(r"<pubDate>([^<]+)</pubDate>",l)

@@ -3,6 +3,14 @@
 TMPRSS="tmprss"
 
 declare -a urls=(
+  "https://feeds.a.dj.com/rss/RSSOpinion.xml"
+  "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
+  "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
+  "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+  "https://feeds.a.dj.com/rss/RSSWSJD.xml"
+  "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
+
+  "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml"
@@ -59,6 +67,7 @@ declare -a urls=(
   "https://rss.nytimes.com/services/xml/rss/nyt/MostShared.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/MostViewed.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/sunday-review.xml"
+
 )
 
 # process  -   process the rss feeds
