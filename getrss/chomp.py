@@ -2,6 +2,8 @@ from datetime import datetime
 import re
 import sys
 import os.path
+import mysql.connector
+from mysql.connector import errorcode
 
 
 item = 0            # Global highest item number processed
@@ -12,6 +14,103 @@ title = ""          # title associated with current item
 description = ""    # short description of the article
 pubDate = ""        # date on which the article was published
 items = []          # the list of items that are created
+cnx = None
+add_item = ("INSERT INTO Item "
+            "(Title, Description, PubDt, Link) "
+            "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s)")
+
+def forceDBError():
+    add_test = ("INSERT INTO Item "
+                "(Title, Description, Link) "
+                "VALUES (%(Title)s, %(Description)s, %(Link)s)")
+    try:
+        cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
+        cursor = cnx.cursor()
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Problem with user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+        else:
+            print(err)
+        sys.exit()
+
+    rec1 = {
+        'Title' : 'hey',
+        'Description' : 'hey there',
+        'Link' : 'http://example.com/hey',
+    }
+    rec2 = {
+        'Title' : 'heyYou',
+        'Description' : 'heyYou there',
+        'Link' : 'http://example.com/hey',
+    }
+    try:
+        cursor.execute(add_test,rec1)
+        cursor.execute(add_test,rec2)
+    except mysql.connector.Error as err:
+        print("db error on insert: " + str(err))
+
+    #------------------------------------
+    #  Now commit all the updates...
+    #------------------------------------
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+
+def updateDB():
+    global cnx
+    dups = {}
+
+    try:
+        cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
+        cursor = cnx.cursor()
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Problem with user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database does not exist")
+        else:
+            print(err)
+        sys.exit()
+
+    for i in items:
+        #-----------------------------------------------------
+        # never write the same article out twice...
+        #-----------------------------------------------------
+        try:
+            found = dups[i[3]]
+        except Exception as e:
+            dups[i[3]] = 1
+            found = 0
+        if found > 0:
+            print("Duplicate: {}".format(i[2]))
+        else:
+            rec = {
+                'Title' : i[2],
+                'Description' : i[4],
+                'PubDt' : i[1],
+                'Link' : i[3],
+            }
+            try:
+                cursor.execute(add_item,rec)
+            except mysql.connector.Error as err:
+                s = str(err)
+                idx = s.find("Duplicate entry")
+                if idx >= 0:
+                    print('duplicate not added: ' + i[3])
+                else:
+                    print("db error on insert: " + s)
+                    sys.exit("error writing to db")
+
+    #------------------------------------
+    #  Now commit all the updates...
+    #------------------------------------
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
 
 # processLine - a function to pull selected data from an RSS item.  It
 #               can be called successively as the rss file is processed
@@ -53,6 +152,13 @@ def processLine(l):
 
         if "<title>" in l:
             u = re.findall(r"<title>([^<]+)</title>",l)
+            if len(u) < 1:
+                print("**** WARNING ****  Could not match title end.  l = " + l)
+                idx = l.find("<title>")
+                s = l[idx + 7:]
+                print("                   Setting title to partial value:  " + s)
+                title = s
+                return
             title = u[0]
             # print("TITLE = " + title)
 
@@ -74,6 +180,7 @@ def processLine(l):
                 # print( "Date = {}".format(pubDate))
 
         if "</item>" in l:
+            #                 0          1      2    3   4
             items.append((currentItem,pubDate,title,url,description))
             # print(items[item])
             currentItem = 0   # mark that no item is in scope
@@ -83,7 +190,7 @@ def processLine(l):
             pubDate = ""
             item += 1
 
-# exportCSV -  exports fields in item to a a csv format
+# exportCSV -  exports each item in the global items[] to the supplied csv file.
 #
 #  fname = name of csv file. It will be created if it does not exist. Otherwise,
 #          it will be appended to
@@ -128,6 +235,7 @@ def exportCSV(fname):
 ###############################################################################
 if len(sys.argv) < 3:
     sys.exit("You need to supply the file name to be parsed and the output file name.")
+
 try:
     with open(sys.argv[1]) as f:
         for line in f:
@@ -138,6 +246,7 @@ try:
 except OSError as err:
     sys.exit("error opening/reading {}: {}".format(sys.argv[1],err))
 
-exportCSV(sys.argv[2])
+# exportCSV(sys.argv[2])
+updateDB()
 
 print("Exported {} rows".format(len(items)))

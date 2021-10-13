@@ -23,23 +23,26 @@ Initialize () {
     OS=$(uname)     # we need this because of quirks with Mac OS date(1)
 
     # earlies date is 01-02-2011
+    # STARTDAY=01
+    # STARTMONTH=01
+    # STARTYEAR=2019
     STARTDAY=01
-    STARTMONTH=01
-    STARTYEAR=2019
+    STARTMONTH=10
+    STARTYEAR=2021
     STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
 
     # STOPYEAR=$(date "+%Y")
     # STOPMONTH=$(date "+%m")
     # STOPDAY=$(date "+%d")
-    STOPDAY=01
-    STOPMONTH=02
+    STOPDAY=03
+    STOPMONTH=10
     STOPYEAR=2021
     STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
 
     echo "Start Date:  ${STARTDATE}"
     echo " Stop Date:  ${STOPDATE}"
 
-    echo -n "Resetting exch database... "
+    echo -n "Resetting plato database... "
     mysql --no-defaults < schema.sql
     echo "done!"
 
@@ -58,7 +61,7 @@ Foreign Exchange Database Creator
 
     Usage:   newdb.sh [OPTIONS] CMD
 
-    This command removes a mysql database named exch and create a new one based
+    This command removes a mysql database named "plato" and create a new one based
     on the configuration parameters in Initialize.
 
 OPTIONS:

@@ -25,7 +25,7 @@ import ticker
 #  Connect to the database
 #-------------------------------------------------------------
 try:
-    cnx = mysql.connector.connect(user='ec2-user', database='exch', host='localhost')
+    cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
     cursor = cnx.cursor()
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:

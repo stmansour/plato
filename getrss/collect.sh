@@ -1,6 +1,28 @@
  #!/usr/bin/env bash
+ #
+ # collect.sh [url1] [url2] ... [urln]
+ #
+ # This routine copies the rss feed information from one or more urls that
+ # point to an xml rss feed into a local file and calls the python routine
+ # chomp.py to process each xml file.
+ #
+ # If called with no arguments, it will pull the feed information from an
+ # internal list of urls.
+ #
+ # If called with arguments, each argument is assumed to be a valid url to an
+ # xml rss feed. In this case, it will ignore the internal list of urls and
+ #
+ # Examples:
+ #
+ #   $ ./collect.#!/bin/sh
+ #      Process the internal list of urls
+ #
+ #   $ ./collect.#!/bin/sh https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+ #     Process only https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+ #=============================================================================
 
 TMPRSS="tmprss"
+OUTFILE="nytimesrss.csv"
 
 declare -a urls=(
   "https://feeds.a.dj.com/rss/RSSOpinion.xml"
@@ -76,7 +98,7 @@ declare -a urls=(
 function process() {
     echo "retrieving from: ${1}"
     curl -s "${1}" -o "${TMPRSS}"
-    python3 chomp.py "${TMPRSS}" nytimesrss.csv
+    python3 chomp.py "${TMPRSS}" "${OUTFILE}"
 }
 
 # cleanup - remove temp files
@@ -85,14 +107,24 @@ function cleanup() {
     rm -f "${TMPRSS}"
 }
 
-# process  -   process the rss feeds
-# $1 = the url to process
+# main routine...
+#
 #---------------------------------------------------------------------------
 function main() {
     for url in "${urls[@]}"; do
         process "${url}"
     done
 }
+
+###############################################################################
+
+if [[ "#{@}" != "0" ]]; then
+    for url in "$@"; do
+        process "${url}"
+    done
+    cleanup
+    exit 0
+fi
 
 main
 cleanup
