@@ -1,0 +1,2 @@
+edb:
+	shellcheck edb.sh

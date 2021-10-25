@@ -247,6 +247,5 @@ except OSError as err:
     sys.exit("error opening/reading {}: {}".format(sys.argv[1],err))
 
 # exportCSV(sys.argv[2])
-updateDB()
-
+updateDB();
 print("Exported {} rows".format(len(items)))
