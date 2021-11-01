@@ -46,6 +46,7 @@ Trace () {
 SetDateSecs () {
     Trace "SetDateSecs  - OS: ${OS}, STARTDATE: ${STARTDATE}, STOPDATE: ${STOPDATE}"
     if [ "${OS}" == "Darwin" ]; then
+        Trace "STARTDATE = ${STARTDATE}, STOPDATE = ${STOPDATE}"
         STARTDATESECS=$(date -j -f "%Y-%m-%d" "${STARTDATE}" "+%s")
         STOPDATESECS=$(date -j -f "%Y-%m-%d" "${STOPDATE}" "+%s")
     else
@@ -55,49 +56,83 @@ SetDateSecs () {
 }
 
 #-------------------------------------------------------------------------------
-#  Today  -  set the start and stop dates to pull today's information
+#  ExtractYMD  - Extract year, month, day values from a string formatted as:
+#                  "YYYY-MM-DD"
+#
 #-------------------------------------------------------------------------------
-Today () {
-    Trace "Today"
-    STOPYEAR=$(date "+%Y")
-    STOPMONTH=$(date "+%m")
-    STOPDAY=$(date "+%d")
-    STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
+ExtractYMD () {
+    Trace "ExtractYMD"
+    YEAR="${d:0:4}"
+    MONTH="${d:5:2}"
+    DAY="${d:8:2}"
 
-    STARTYEAR="${STOPYEAR}"
-    STARTMONTH="${STOPMONTH}"
-    STARTDAY="${STOPDAY}"
-    STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
-
-    SetDateSecs
-    STARTDATESECS=$((STARTDATESECS-OFFSET))
-    DATESECS=${STARTDATESECS}
-    SetDateValues
-    STARTDATE="${YEAR}-${MONTH}-${DAY}"
-    Trace "STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
+    Trace "YEAR = ${YEAR}, MONTH = ${MONTH}, DAY = ${DAY}"
 }
 
 #-------------------------------------------------------------------------------
-#  GetAllData  -  set start and end dates for data gathering
+#  QueryUserForNumber  -  Ask the user for a number and provide limits if needed.
+#
+#  $1 = prompt string
+#  $2 = default value
+#  $3 = lower limit
+#  $4 = upper limit
+#
+#  caller does this:
+#       resp=$(QueryUserForNumber "month" 3 1 12)
 #-------------------------------------------------------------------------------
-GetAllData () {
-    Trace "GetAllData"
-    Today     # initialize STOP values
-
-    # earlies date is 01-02-2011
-    STARTDAY=02
-    STARTMONTH=01
-    STARTYEAR=2011
-    STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
-
-    # STOPDAY=03
-    # STOPMONTH=10
-    # STOPYEAR=2021
-    STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
+QueryUserForNumber () {
+    DONE=0
+    while [ ${DONE} -eq 0 ]; do
+        read -rp "${1} [${2}]: " a
+        DONE=1
+        if [[ "${3}x" != "x" ]]; then
+            if (( a < ${3} )); then
+                echo "the value must be at least ${3}"
+                DONE=0
+            fi
+        fi
+        if [[ "${4}x" != "x" ]]; then
+            if (( a > ${4} )); then
+                echo "the value must not be larger than ${4}"
+                DONE=0
+            fi
+        fi
+    done
+    echo "${a}"
 }
 
 #-------------------------------------------------------------------------------
-#  SetDateValues  -  set YEAR, MONTH, DAY based on DATASECS
+#  QueryUserForDateString  -  Ask the user for a date string.
+#
+#  $1 = prompt string
+#  $2 = default value
+#
+#  Example:
+#       resp=$(QueryUserForNumber "Start date" "2018-02-27")
+#-------------------------------------------------------------------------------
+QueryUserForDateString () {
+    DONE=0
+    while [ ${DONE} -eq 0 ]; do
+        read -rp "${1} [${2}]: " a
+        DONE=1
+        if [[ "${a}x" == "x" ]]; then
+            a="${2}"
+        fi
+    done
+    echo "${a}"
+}
+
+#-------------------------------------------------------------------------------
+#  SetDateValues  -  set YEAR, MONTH, DAY based on DATASECS.
+#
+#  Example Usage:
+#       [ set STARTDATESECS to whatever ]
+#       DATESECS=${STARTDATESECS}
+#       SetDateValues
+#       STARTDATE=${DAY}
+#       STARTMONTH=${MONTH}
+#       STARTYEAR=$YEAR
+#
 #       Note: commands used are os dependent
 #-------------------------------------------------------------------------------
 SetDateValues () {
@@ -118,6 +153,82 @@ SetDateValues () {
         YEAR=$(date -d "${d}" "+%Y")
     fi
     Trace "YEAR: ${YEAR}, MONTH: ${MONTH}, DAY: ${DAY}"
+}
+
+#-------------------------------------------------------------------------------
+#  SetEarliestStart  -  set the starting date to the earliest known data
+#                       collection time.
+#-------------------------------------------------------------------------------
+SetEarliestStart () {
+    Trace "SetEarliestStart"
+    # earlies date is 01-02-2011
+    STARTDAY=02
+    STARTMONTH=01
+    STARTYEAR=2011
+    STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
+}
+
+#-------------------------------------------------------------------------------
+#  SetTodayAsStop  -  set today's date as the stop time
+#-------------------------------------------------------------------------------
+SetTodayAsStop () {
+    Trace "SetEarliestStart"
+    # earlies date is 01-02-2011
+    STOPYEAR=$(date "+%Y")
+    STOPMONTH=$(date "+%m")
+    STOPDAY=$(date "+%d")
+    STOPDATE="${STOPYEAR}-${STOPMONTH}-${STOPDAY}"
+}
+
+
+#-------------------------------------------------------------------------------
+#  FinalizeDateRange  -  set values needed by Main
+#-------------------------------------------------------------------------------
+FinalizeDateRange () {
+    Trace "FinalizeDateRange  MODE = ${MODE}"
+    SetDateSecs
+    Trace "STARTDATESECS: ${STARTDATESECS}"
+    if [ "${MODE}" == "today" ]; then
+        STARTDATESECS=$((STARTDATESECS-OFFSET))
+        Trace "STARTDATESECS: ${STARTDATESECS}"
+    fi
+    DATESECS=${STARTDATESECS}
+    SetDateValues
+    STARTDATE="${YEAR}-${MONTH}-${DAY}"
+    Trace "STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
+}
+#-------------------------------------------------------------------------------
+#  Today  -  set the start and stop dates to pull today's information
+#-------------------------------------------------------------------------------
+Today () {
+    Trace "Today"
+    SetTodayAsStop
+
+    STARTYEAR="${STOPYEAR}"
+    STARTMONTH="${STOPMONTH}"
+    STARTDAY="${STOPDAY}"
+    STARTDATE="${STARTYEAR}-${STARTMONTH}-${STARTDAY}"
+    FinalizeDateRange
+}
+
+
+SetGetAllDates () {
+    Trace "SetGetAllDates"
+    SetEarliestStart
+    SetTodayAsStop
+    FinalizeDateRange
+}
+
+#-------------------------------------------------------------------------------
+#  GetAllData  -  query the user for the date range to collect
+#-------------------------------------------------------------------------------
+GetRangeDates () {
+    Trace "GetRangeDates"
+    SetEarliestStart
+    SetTodayAsStop
+    STARTDATE=$(QueryUserForDateString "Start date" "${STARTDATE}")
+    STOPDATE=$(QueryUserForDateString "Stop date" "${STOPDATE}")
+    FinalizeDateRange
 }
 
 #-------------------------------------------------------------------------------
@@ -181,6 +292,11 @@ EXAMPLES:
     one:
 
     	bash$  ./${PROGNAME} newdb
+
+    Command to start ${PROGNAME}, remove the old exch database and create a new
+    one with all exchange information available online:
+
+    	bash$  ./${PROGNAME} newdb all
 
     Command to remove any temporary files that may be in this directory due
     to stopping the program earlier or due to an error:
@@ -255,7 +371,23 @@ ProcessExch () {
 #       Python program process.py extracts the information of interest.
 #-------------------------------------------------------------------------------
 Main () {
-    Trace "Main   STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
+    Trace "Main   MODE: ${MODE}, STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
+
+    #-------------------------
+    # Quick sanity check...
+    #-------------------------
+    if [ "${STARTDATESECS}x" == "x" ]; then
+        echo "*** ERROR ***  STARTDATESECS = \"${STARTDATESECS}\""
+        exit 1
+    fi
+    if [ "${STOPDATESECS}x" == "x" ]; then
+        echo "*** ERROR ***  STOPDATESECS = \"${STOPDATESECS}\""
+        exit 1
+    fi
+
+    #-----------------
+    # On with it...
+    #-----------------
     DATESECS="${STARTDATESECS}"
     clean
     CheckCreateNewDB
@@ -285,7 +417,7 @@ for arg do
 	"clean")
 		clean
 		;;
-    "debug" | "-debug" )
+    "debug" | "-debug" | "-d" )
         DEBUG=1
         ;;
     "help" | "h" | "-h" | "-help")
@@ -298,11 +430,35 @@ for arg do
     "newdb")
         NEWDB=1
         ;;
-    "all" )
-        MODE="${cmd}"
+    "all" | "a" | "-all" | "-a")
+        MODE="all"
+        DONE=0
+        ans=""
+        while [ ${DONE} -eq 0 ]; do
+            echo "This will pull all data from ${STARTDATE} to today."
+            echo "It will take a long time."
+            read -rp 'Continue?  [y/n]: ' a
+            ans=$(echo "${a}" | tr "[:upper:]" "[:lower:]")
+            if [[ "${ans}" == "y" || "${ans}" == "n" ]]; then
+                if [[ "${ans}" == "y" ]]; then
+                    MODE="${cmd}"
+                    SetGetAllDates
+                    DONE=1
+                else
+                    exit 0
+                fi
+            else
+                echo "you must enter y or n. y = yes, n = no"
+            fi
+        done
         ;;
-    "today")
-        MODE="${cmd}"
+    "today" | "t" | "-t" | "-today")
+        MODE="today"
+        Today
+        ;;
+    "range" | "r" | "-range" | "-r")
+        MODE="range"
+        GetRangeDates
         ;;
 	*)  #invalid argument
 		echo "Unrecognized command: $arg"
@@ -311,12 +467,6 @@ for arg do
 		;;
     esac
 done
-
-if [ "${MODE}" == "all" ]; then
-    GetAllData
-elif [ "${MODE}" == "today" ]; then
-    Today
-fi
 
 Main
 
