@@ -259,7 +259,7 @@ OPTIONS:
 CMD:
     CMD is one of the following:
 
-    all
+    all, a, -all, -a
         Update the database with all the exchange information using the internal
         start and stop dates for this program.  Could run for many hours.
 
@@ -279,7 +279,10 @@ CMD:
         you know what you're doing if you use this command. Otherwise you may
         destroy information that you didn't mean to destroy.
 
-    today
+    range, r, -range, -r
+        Query for the date range of exchange rate extraction.
+
+    today, t, -today, -t
         Update the database with today's information. For table Exch, this means
         adding all the exchange rate information for yesterday.
 
@@ -366,12 +369,40 @@ ProcessExch () {
 }
 
 #-------------------------------------------------------------------------------
+#  Init - Perform all initialization needed.
+#       To connect to the "plato" database, we need to have SonicWall running.
+#-------------------------------------------------------------------------------
+Init () {
+    Trace "Entering Init"
+    SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
+    if (( SONIC < 2 )); then
+        "/Applications/SonicWall Mobile Connect.app/Contents/MacOS/SonicWall Mobile Connect" &
+        echo "Please open the connection to Accord's Mariadb, then try again"
+        exit 0
+    fi
+    Trace "Exiting Init"
+}
+#-------------------------------------------------------------------------------
 #  Main  -  Pull data STARTDATE to ENDDATE. Information
 #       for all Tickers is provided in the files we get from the URL. The
 #       Python program process.py extracts the information of interest.
 #-------------------------------------------------------------------------------
 Main () {
-    Trace "Main   MODE: ${MODE}, STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
+    Trace "Main   MODE: ${MODE}"
+
+    if [ "${MODE}" == "today" ]; then
+        Today
+    elif [[ "${MODE}" == "range" ]]; then
+        GetRangeDates
+    elif [[ "${MODE}" == "all" ]]; then
+        SetGetAllDates
+    else
+        echo "Unrecognized mode:  \"${MODE}\""
+        exit 1
+    fi
+
+        #statements
+    Trace "Main  STARTDATESECS: ${STARTDATESECS}, STOPDATESECS: ${STOPDATESECS}"
 
     #-------------------------
     # Quick sanity check...
@@ -441,8 +472,7 @@ for arg do
             ans=$(echo "${a}" | tr "[:upper:]" "[:lower:]")
             if [[ "${ans}" == "y" || "${ans}" == "n" ]]; then
                 if [[ "${ans}" == "y" ]]; then
-                    MODE="${cmd}"
-                    SetGetAllDates
+                    MODE="all"
                     DONE=1
                 else
                     exit 0
@@ -454,11 +484,9 @@ for arg do
         ;;
     "today" | "t" | "-t" | "-today")
         MODE="today"
-        Today
         ;;
     "range" | "r" | "-range" | "-r")
         MODE="range"
-        GetRangeDates
         ;;
 	*)  #invalid argument
 		echo "Unrecognized command: $arg"
@@ -468,6 +496,7 @@ for arg do
     esac
 done
 
+Init
 Main
 
 if [ -f "missing.txt" ]; then

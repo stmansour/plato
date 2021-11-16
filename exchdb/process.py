@@ -1,5 +1,6 @@
 import sys
 import csv
+import json
 import datetime
 import mysql.connector
 from mysql.connector import errorcode
@@ -16,70 +17,91 @@ import ticker
 # EURUSD,20110102,230400,1.3341,1.3343,1.3341,1.3343
 #------------------------------------------------------------------------------
 
-# a class to hold a record of foreign exchange info
-# class Forex:
-#     def __str__(self):
-#         return self.Ticker + " " + self.Dt.strftime("%d-%b-%Y (%H:%M)") + " " + str(self.Close)
-
-#-------------------------------------------------------------
-#  Connect to the database
-#-------------------------------------------------------------
-try:
-    cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
-    cursor = cnx.cursor()
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Problem with user name or password")
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist")
-    else:
+def Main():
+    #-------------------------------------------------------------
+    #  Read config info
+    #-------------------------------------------------------------
+    try:
+        f = open('config.json','r')
+        config = json.load(f)
+    except FileNotFoundError as err:
+        print("\n\n\n*** Problem opening config.json: ")
         print(err)
-    sys.exit()
+        sys.exit()
 
-add_exch = ("INSERT INTO Exch "
-            "(Dt, Ticker, Open, High, Low, Close) "
-            "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s)")
-
-ticker.initTicker()
-
-#-------------------------------------------------------------
-#  Process the input file...
-#-------------------------------------------------------------
-with open(sys.argv[1]) as csv_file:
-    reader = csv.reader(csv_file, delimiter=',')
-    line = 0
-    for r in reader:
-        if line == 0:
-            pass
+    #-------------------------------------------------------------
+    #  Connect to the database
+    #-------------------------------------------------------------
+    try:
+        # print("Attempting db connection\n")
+        # print("host = " + config.get("PlatoDbhost"))
+        # print("user = " + config.get("PlatoDbuser"))
+        # print("passwd = " + config.get("PlatoDbpass"))
+        # print("database = " + config.get("PlatoDbname"))
+        cnx = mysql.connector.connect(user=config.get("PlatoDbuser"),
+                                      password=config.get("PlatoDbpass"),
+                                      database=config.get("PlatoDbname"),
+                                      host=config.get("PlatoDbhost"))
+        cursor = cnx.cursor()
+        print("cursor acquired!")
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("\n\n\n*** Problem with user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("\n\n\n*** Database does not exist")
         else:
-            try:
-                x = ticker.tickers[r[0]]
-            except KeyError:
-                ticker.unknownTicker(r[0])
-                sys.exit()
+            print(err)
+        sys.exit()
 
-            if x == 1:
-                y = int(r[1][:4])   # the date is in this format: YYYYMMDD
-                m = int(r[1][4:6])
-                d = int(r[1][6:])
-                H = int(r[2][:2])
-                M = int(r[2][2:4])
-                rec = {
-                    'Ticker' : r[0],
-                    'Dt' : datetime.datetime(y,m,d,H,M),
-                    'Open' : float(r[3]),
-                    'High' : float(r[4]),
-                    'Low' : float(r[5]),
-                    'Close' : float(r[6]),
-                }
+    add_exch = ("INSERT INTO Exch "
+                "(Dt, Ticker, Open, High, Low, Close) "
+                "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s)")
+
+    ticker.initTicker()
+    print("ticker initialized")
+    #-------------------------------------------------------------
+    #  Process the input file...
+    #-------------------------------------------------------------
+    with open(sys.argv[1]) as csv_file:
+        reader = csv.reader(csv_file, delimiter=',')
+        line = 0
+        for r in reader:
+            if line == 0:
+                pass
+            else:
                 try:
-                    cursor.execute(add_exch,rec)
-                except mysql.connector.Error as err:
-                    print("db error on insert: " + err)
+                    x = ticker.tickers[r[0]]
+                except KeyError:
+                    ticker.unknownTicker(r[0])
                     sys.exit()
 
-        line += 1
+                if x == 1:
+                    y = int(r[1][:4])   # the date is in this format: YYYYMMDD
+                    m = int(r[1][4:6])
+                    d = int(r[1][6:])
+                    H = int(r[2][:2])
+                    M = int(r[2][2:4])
+                    rec = {
+                        'Ticker' : r[0],
+                        'Dt' : datetime.datetime(y,m,d,H,M),
+                        'Open' : float(r[3]),
+                        'High' : float(r[4]),
+                        'Low' : float(r[5]),
+                        'Close' : float(r[6]),
+                    }
+                    print("Attempt to write record {}".format(line))
+                    try:
+                        cursor.execute(add_exch,rec)
+                    except mysql.connector.Error as err:
+                        print("db error on insert: " + err)
+                        sys.exit()
+                    print("Finished!")
 
-cnx.commit()
-cursor.close()
-cnx.close()
+            line += 1
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+
+Main()
