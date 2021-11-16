@@ -95,7 +95,6 @@ def Main():
                     except mysql.connector.Error as err:
                         print("db error on insert: " + err)
                         sys.exit()
-                    print("Finished!")
 
             line += 1
 
