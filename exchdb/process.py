@@ -89,7 +89,7 @@ def Main():
                         'Low' : float(r[5]),
                         'Close' : float(r[6]),
                     }
-                    print("Attempt to write record {}".format(line))
+                    print("{}. {}-{}-{} {}:{}".format(line,y,m,d,H,M))
                     try:
                         cursor.execute(add_exch,rec)
                     except mysql.connector.Error as err:
