@@ -1,24 +1,5 @@
  #!/usr/bin/env bash
  #
- # collect.sh [url1] [url2] ... [urln]
- #
- # This routine copies the rss feed information from one or more urls that
- # point to an xml rss feed into a local file and calls the python routine
- # chomp.py to process each xml file.
- #
- # If called with no arguments, it will pull the feed information from an
- # internal list of urls.
- #
- # If called with arguments, each argument is assumed to be a valid url to an
- # xml rss feed. In this case, it will ignore the internal list of urls and
- #
- # Examples:
- #
- #   $ ./collect.#!/bin/sh
- #      Process the internal list of urls
- #
- #   $ ./collect.#!/bin/sh https://feeds.a.dj.com/rss/RSSMarketsMain.xml
- #     Process only https://feeds.a.dj.com/rss/RSSMarketsMain.xml
  #=============================================================================
 
 TMPRSS="tmprss"
@@ -92,6 +73,37 @@ declare -a urls=(
 
 )
 
+function usage() {
+    cat << FEOF
+
+collect.sh [OPTIONS] [url1] [url2] ... [urln]
+
+    This routine copies the rss feed information from one or more urls that
+    point to an xml rss feed into a local file and calls the python routine
+    chomp.py to process each xml file.
+
+    If called with no arguments, it will pull the feed information from an
+    internal list of urls.
+
+    If called with arguments, each argument is assumed to be a valid url to an
+    xml rss feed. In this case, it will ignore the internal list of urls.
+
+OPTIONS
+
+    -h, -help  Prints out this documentation
+
+
+Examples:
+
+$ ./collect.sh
+  Process the internal list of urls
+
+$ ./collect.sh https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+  Process only https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+FEOF
+
+}
+
 # process  -   process the rss feeds
 # $1 = the url to process
 #---------------------------------------------------------------------------
@@ -118,13 +130,26 @@ function main() {
 
 ###############################################################################
 
+#----------------------------------------------------------------
+# Process any URLs that were passed in on the command line...
+#----------------------------------------------------------------
 if [[ "#{@}" != "0" ]]; then
     for url in "$@"; do
-        process "${url}"
+        case "${url}" in
+            "help" | "h" | "-h" | "-help")
+                usage
+                exit 0
+                ;;
+        *)
+            process "${url}"
+        esac
     done
     cleanup
     exit 0
 fi
 
+#----------------------------------------------------------------
+# If no urls were supplied, use our internal list
+#----------------------------------------------------------------
 main
 cleanup
