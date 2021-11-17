@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import re
 import sys
 import os.path
@@ -19,52 +20,67 @@ add_item = ("INSERT INTO Item "
             "(Title, Description, PubDt, Link) "
             "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s)")
 
-def forceDBError():
-    add_test = ("INSERT INTO Item "
-                "(Title, Description, Link) "
-                "VALUES (%(Title)s, %(Description)s, %(Link)s)")
-    try:
-        cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
-        cursor = cnx.cursor()
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Problem with user name or password")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-        else:
-            print(err)
-        sys.exit()
-
-    rec1 = {
-        'Title' : 'hey',
-        'Description' : 'hey there',
-        'Link' : 'http://example.com/hey',
-    }
-    rec2 = {
-        'Title' : 'heyYou',
-        'Description' : 'heyYou there',
-        'Link' : 'http://example.com/hey',
-    }
-    try:
-        cursor.execute(add_test,rec1)
-        cursor.execute(add_test,rec2)
-    except mysql.connector.Error as err:
-        print("db error on insert: " + str(err))
-
-    #------------------------------------
-    #  Now commit all the updates...
-    #------------------------------------
-    cnx.commit()
-    cursor.close()
-    cnx.close()
+# def forceDBError():
+#     add_test = ("INSERT INTO Item "
+#                 "(Title, Description, Link) "
+#                 "VALUES (%(Title)s, %(Description)s, %(Link)s)")
+#     try:
+#         cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
+#         cursor = cnx.cursor()
+#     except mysql.connector.Error as err:
+#         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+#             print("Problem with user name or password")
+#         elif err.errno == errorcode.ER_BAD_DB_ERROR:
+#             print("Database does not exist")
+#         else:
+#             print(err)
+#         sys.exit()
+#
+#     rec1 = {
+#         'Title' : 'hey',
+#         'Description' : 'hey there',
+#         'Link' : 'http://example.com/hey',
+#     }
+#     rec2 = {
+#         'Title' : 'heyYou',
+#         'Description' : 'heyYou there',
+#         'Link' : 'http://example.com/hey',
+#     }
+#     try:
+#         cursor.execute(add_test,rec1)
+#         cursor.execute(add_test,rec2)
+#     except mysql.connector.Error as err:
+#         print("db error on insert: " + str(err))
+#
+#     #------------------------------------
+#     #  Now commit all the updates...
+#     #------------------------------------
+#     cnx.commit()
+#     cursor.close()
+#     cnx.close()
 
 
 def updateDB():
     global cnx
     dups = {}
+    #-------------------------------------------------------------
+    #  Read config info
+    #-------------------------------------------------------------
+    try:
+        f = open('config.json','r')
+        config = json.load(f)
+    except FileNotFoundError as err:
+        print("\n\n\n*** Problem opening config.json: ")
+        print(err)
+        sys.exit()
+
 
     try:
-        cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
+        # cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
+        cnx = mysql.connector.connect(user=config.get("PlatoDbuser"),
+                                      password=config.get("PlatoDbpass"),
+                                      database=config.get("PlatoDbname"),
+                                      host=config.get("PlatoDbhost"))
         cursor = cnx.cursor()
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -245,6 +261,8 @@ try:
         f.close()
 except OSError as err:
     sys.exit("error opening/reading {}: {}".format(sys.argv[1],err))
+
+
 
 # exportCSV(sys.argv[2])
 updateDB();

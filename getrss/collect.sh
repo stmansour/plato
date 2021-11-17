@@ -136,12 +136,13 @@ function main() {
 if [[ "#{@}" != "0" ]]; then
     for url in "$@"; do
         case "${url}" in
-            "help" | "h" | "-h" | "-help")
-                usage
-                exit 0
-                ;;
+        "help" | "h" | "-h" | "-help")
+            usage
+            exit 0
+            ;;
         *)
             process "${url}"
+            ;;
         esac
     done
     cleanup

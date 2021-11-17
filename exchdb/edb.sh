@@ -352,11 +352,22 @@ ProcessExch () {
 
     #---------------------------------------------------------------------
     # Download the data for this date and put it into the database...
+    # Use a simple retry 3 times algorithm. I have seen curl fail on
+    # these sites only to succeed the next try.
     #---------------------------------------------------------------------
-    curl -s "${URL}" -o "${FNAME}"
-    retval=$?
-    if [ ${retval} -ne 0 ]; then
-        echo "Problem downloading ${URL}"
+    SUCCESS=0
+    for (( retries=0; retries<3; retries++ )); do
+        if curl --fail-with-body -s "${URL}" -o "${FNAME}"; then
+            retries=3
+            SUCCESS=1
+        else
+            attempt=$(( 1 + retries ))
+            echo "Retry attempt ${attempt}"
+            sleep 5
+        fi
+    done
+    if (( SUCCESS != 1 )); then
+        echo "Problem downloading ${URL}.  Attempted to download 3 times"
         exit 1
     fi
     unzip -qq "${FNAME}"
