@@ -443,6 +443,18 @@ Main () {
         ProcessExch
         DATESECS=$((DATESECS + OFFSET))
     done
+
+    #------------------------------------------------------------------------
+    # if there were exchange currencies we haven't seen before, speak up
+    #------------------------------------------------------------------------
+    if [ -f "missing.txt" ]; then
+        echo "--------------------------------------------------"
+        echo "               **** NOTICE ****"
+        echo "--------------------------------------------------"
+        echo "There are unhandled tickers:"
+        cat missing.txt
+        echo "--------------------------------------------------"
+    fi
 }
 
 #===========================================================================
@@ -507,14 +519,26 @@ for arg do
     esac
 done
 
+T0=$(date "+%Y-%m-%d %H:%M:%S")
 Init
 Main
+T1=$(date "+%Y-%m-%d %H:%M:%S")
 
-if [ -f "missing.txt" ]; then
-    echo "--------------------------------------------------"
-    echo "               **** NOTICE ****"
-    echo "--------------------------------------------------"
-    echo "There are unhandled tickers:"
-    cat missing.txt
-    echo "--------------------------------------------------"
+if [ "${OS}" == "Darwin" ]; then
+    T0SECS=$(date -j -f "%Y-%m-%d %H:%M:%S" "${T0}" "+%s")
+    T1SECS=$(date -j -f "%Y-%m-%d %H:%M:%S" "${T1}" "+%s")
+else
+    T0SECS=$(date -d "${T0}" "+%s")
+    T1SECS=$(date -d "${T1}" "+%s")
 fi
+# echo "T0SECS = ${T0SECS}     T1SECS = ${T1SECS}"
+DUR=$(( T1SECS - T0SECS ))
+DAYS=$(( DUR/(24*60*60) ))
+DUR=$(( DUR - (DAYS*24*60*60) ))
+HOURS=$(( DUR/(60*60) ))
+DUR=$(( DUR - HOURS*60*60 ))
+MINS=$(( DUR/60 ))
+SECS=$(( DUR - MINS*60 ))
+echo "Start Time:  ${T0}"
+echo "Stop Time:   ${T1}"
+echo "Duration:    ${DAYS} days, ${HOURS} hours, ${MINS} min, ${SECS} sec"

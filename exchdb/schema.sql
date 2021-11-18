@@ -12,6 +12,7 @@ CREATE TABLE Exch (
     High DECIMAL(19,4) NOT NULL DEFAULT 0,                  -- High value during this minute
     Low DECIMAL(19,4) NOT NULL DEFAULT 0,                   -- Low value during this minute
     Close DECIMAL(19,4) NOT NULL DEFAULT 0,                 -- Closing value for this minute
+    CONSTRAINT Alpha UNIQUE(Dt,Ticker),                     -- ensure we don't save more than one of these
     PRIMARY KEY(XID)
 );
 

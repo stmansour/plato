@@ -33,11 +33,6 @@ def Main():
     #  Connect to the database
     #-------------------------------------------------------------
     try:
-        # print("Attempting db connection\n")
-        # print("host = " + config.get("PlatoDbhost"))
-        # print("user = " + config.get("PlatoDbuser"))
-        # print("passwd = " + config.get("PlatoDbpass"))
-        # print("database = " + config.get("PlatoDbname"))
         cnx = mysql.connector.connect(user=config.get("PlatoDbuser"),
                                       password=config.get("PlatoDbpass"),
                                       database=config.get("PlatoDbname"),
@@ -93,9 +88,11 @@ def Main():
                     try:
                         cursor.execute(add_exch,rec)
                     except mysql.connector.Error as err:
-                        print("db error on insert: " + err)
+                        print("db error on insert: ")
+                        print(err)
+                        cursor.close()
+                        cnx.close()
                         sys.exit()
-
             line += 1
 
     cnx.commit()
