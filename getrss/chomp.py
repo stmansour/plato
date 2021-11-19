@@ -17,8 +17,8 @@ pubDate = ""        # date on which the article was published
 items = []          # the list of items that are created
 cnx = None
 add_item = ("INSERT INTO Item "
-            "(Title, Description, PubDt, Link) "
-            "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s)")
+            "(Title, Description, PubDt, Link, CreateBy, LastModBy) "
+            "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s, %(CreateBy)s, %(LastModBy)s)")
 
 # def forceDBError():
 #     add_test = ("INSERT INTO Item "
@@ -63,6 +63,7 @@ add_item = ("INSERT INTO Item "
 def updateDB():
     global cnx
     dups = {}
+    UID = -99998
 
     #-------------------------------------------------------------
     #  Read config info
@@ -111,6 +112,8 @@ def updateDB():
                 'Description' : i[4],
                 'PubDt' : i[1],
                 'Link' : i[3],
+                'CreateBy': UID,
+                'LastModBy': UID,
             }
             try:
                 cursor.execute(add_item,rec)
