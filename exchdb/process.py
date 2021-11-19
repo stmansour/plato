@@ -18,6 +18,8 @@ import ticker
 #------------------------------------------------------------------------------
 
 def Main():
+    UID=-99998
+
     #-------------------------------------------------------------
     #  Read config info
     #-------------------------------------------------------------
@@ -49,8 +51,8 @@ def Main():
         sys.exit()
 
     add_exch = ("INSERT INTO Exch "
-                "(Dt, Ticker, Open, High, Low, Close) "
-                "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s)")
+                "(Dt, Ticker, Open, High, Low, Close, LastmodBy, CreateBy) "
+                "VALUES (%(Dt)s, %(Ticker)s, %(Open)s, %(High)s, %(Low)s, %(Close)s, %(LastModBy)s, %(CreateBy)s)")
 
     ticker.initTicker()
     print("ticker initialized")
@@ -83,8 +85,10 @@ def Main():
                         'High' : float(r[4]),
                         'Low' : float(r[5]),
                         'Close' : float(r[6]),
+                        'LastModBy': UID,
+                        'CreateBy': UID,
                     }
-                    print("{}. {}-{}-{} {}:{}".format(line,y,m,d,H,M))
+                    print("{}. {} {}-{}-{} {}:{} UID={}".format(line,r[0],y,m,d,H,M,UID))
                     try:
                         cursor.execute(add_exch,rec)
                     except mysql.connector.Error as err:

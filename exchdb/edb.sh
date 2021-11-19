@@ -227,7 +227,7 @@ GetRangeDates () {
     SetEarliestStart
     SetTodayAsStop
     STARTDATE=$(QueryUserForDateString "Start date" "${STARTDATE}")
-    STOPDATE=$(QueryUserForDateString "Stop date" "${STOPDATE}")
+    STOPDATE=$(QueryUserForDateString "Stop date (up-to-but-not-including)" "${STOPDATE}")
     FinalizeDateRange
 }
 
@@ -385,11 +385,14 @@ ProcessExch () {
 #-------------------------------------------------------------------------------
 Init () {
     Trace "Entering Init"
-    SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
-    if (( SONIC < 2 )); then
-        "/Applications/SonicWall Mobile Connect.app/Contents/MacOS/SonicWall Mobile Connect" &
-        echo "Please open the connection to Accord's Mariadb, then try again"
-        exit 0
+    AccordNAS=$(grep PlatoDbhost config.json | sed 's/"PlatoDbhost": "//' | sed 's/",//' | grep "10.101.0.13" | wc -l)
+    if (( AccordNAS > 0 )); then
+        SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
+        if (( SONIC < 2 )); then
+            "/Applications/SonicWall Mobile Connect.app/Contents/MacOS/SonicWall Mobile Connect" &
+            echo "Please open the connection to Accord's Mariadb, then try again"
+            exit 0
+        fi
     fi
     Trace "Exiting Init"
 }

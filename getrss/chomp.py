@@ -63,6 +63,7 @@ add_item = ("INSERT INTO Item "
 def updateDB():
     global cnx
     dups = {}
+
     #-------------------------------------------------------------
     #  Read config info
     #-------------------------------------------------------------
@@ -74,7 +75,9 @@ def updateDB():
         print(err)
         sys.exit()
 
-
+    #-------------------------------------------------------------
+    # Open the database and copy the RSS info to the Item table
+    #-------------------------------------------------------------
     try:
         # cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
         cnx = mysql.connector.connect(user=config.get("PlatoDbuser"),

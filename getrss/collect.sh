@@ -133,6 +133,7 @@ function main() {
 #----------------------------------------------------------------
 # Process any URLs that were passed in on the command line...
 #----------------------------------------------------------------
+DONE=0
 if [[ "#{@}" != "0" ]]; then
     for url in "$@"; do
         case "${url}" in
@@ -142,11 +143,14 @@ if [[ "#{@}" != "0" ]]; then
             ;;
         *)
             process "${url}"
+            DONE=1
             ;;
         esac
     done
-    cleanup
-    exit 0
+    if (( DONE == 1 )); then
+        cleanup
+        exit 0
+    fi
 fi
 
 #----------------------------------------------------------------
