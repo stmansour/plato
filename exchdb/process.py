@@ -15,6 +15,10 @@ import ticker
 # EURUSD,20110102,230200,1.3344,1.3345,1.3340,1.3342
 # EURUSD,20110102,230300,1.3341,1.3342,1.3341,1.3341
 # EURUSD,20110102,230400,1.3341,1.3343,1.3341,1.3343
+#
+#  Example Usage:
+#
+#   bash$  python3 process.py  myfile.csv
 #------------------------------------------------------------------------------
 
 def Main():
@@ -62,6 +66,7 @@ def Main():
     with open(sys.argv[1]) as csv_file:
         reader = csv.reader(csv_file, delimiter=',')
         line = 0
+
         for r in reader:
             if line == 0:
                 pass
@@ -69,6 +74,7 @@ def Main():
                 try:
                     x = ticker.tickers[r[0]]
                 except KeyError:
+                    print("key error");
                     ticker.unknownTicker(r[0])
                     sys.exit()
 
@@ -102,6 +108,5 @@ def Main():
     cnx.commit()
     cursor.close()
     cnx.close()
-
 
 Main()

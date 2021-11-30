@@ -16,52 +16,18 @@ description = ""    # short description of the article
 pubDate = ""        # date on which the article was published
 items = []          # the list of items that are created
 cnx = None
+duplicates = 0      # keep track of the number of duplicate entries
+newrecs = 0         # keep track of the number of writes
+
 add_item = ("INSERT INTO Item "
             "(Title, Description, PubDt, Link, CreateBy, LastModBy) "
             "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s, %(CreateBy)s, %(LastModBy)s)")
 
-# def forceDBError():
-#     add_test = ("INSERT INTO Item "
-#                 "(Title, Description, Link) "
-#                 "VALUES (%(Title)s, %(Description)s, %(Link)s)")
-#     try:
-#         cnx = mysql.connector.connect(user='ec2-user', database='plato', host='localhost')
-#         cursor = cnx.cursor()
-#     except mysql.connector.Error as err:
-#         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-#             print("Problem with user name or password")
-#         elif err.errno == errorcode.ER_BAD_DB_ERROR:
-#             print("Database does not exist")
-#         else:
-#             print(err)
-#         sys.exit()
-#
-#     rec1 = {
-#         'Title' : 'hey',
-#         'Description' : 'hey there',
-#         'Link' : 'http://example.com/hey',
-#     }
-#     rec2 = {
-#         'Title' : 'heyYou',
-#         'Description' : 'heyYou there',
-#         'Link' : 'http://example.com/hey',
-#     }
-#     try:
-#         cursor.execute(add_test,rec1)
-#         cursor.execute(add_test,rec2)
-#     except mysql.connector.Error as err:
-#         print("db error on insert: " + str(err))
-#
-#     #------------------------------------
-#     #  Now commit all the updates...
-#     #------------------------------------
-#     cnx.commit()
-#     cursor.close()
-#     cnx.close()
-
 
 def updateDB():
     global cnx
+    global duplicates
+    global newrecs
     dups = {}
     UID = -99998
 
@@ -106,6 +72,7 @@ def updateDB():
             found = 0
         if found > 0:
             print("Duplicate: {}".format(i[2]))
+            duplicates = duplicates + 1
         else:
             rec = {
                 'Title' : i[2],
@@ -116,12 +83,14 @@ def updateDB():
                 'LastModBy': UID,
             }
             try:
+                newrecs = newrecs + 1
                 cursor.execute(add_item,rec)
             except mysql.connector.Error as err:
                 s = str(err)
                 idx = s.find("Duplicate entry")
                 if idx >= 0:
                     print('duplicate not added: ' + i[3])
+                    duplicates = duplicates + 1
                 else:
                     print("db error on insert: " + s)
                     sys.exit("error writing to db")
@@ -156,6 +125,7 @@ def processLine(l):
     global title
     global description
     global pubDate
+    fmts = ['%a, %d %b %Y %H:%M:%S %z', '%a, %d %b %Y %H:%M:%S %Z']
 
     l = l.rstrip()
     if "<item>" in l:
@@ -197,14 +167,23 @@ def processLine(l):
 
         if "<pubDate>" in l:
             u = re.findall(r"<pubDate>([^<]+)</pubDate>",l)
+            found = False
             if len(u) > 0:
-                pubDate = datetime.strptime(u[0], '%a, %d %b %Y %H:%M:%S %z')
-                # print( "Date = {}".format(pubDate))
+                s = u[0]
+                for fmt in fmts:
+                    try:
+                        pubDate = datetime.strptime(s, fmt)
+                        found = True
+                        break
+                    except ValueError as e:
+                        found = False
+
+            if found == False:
+                print("No format found that parses {}".format(s))
 
         if "</item>" in l:
             #                 0          1      2    3   4
             items.append((currentItem,pubDate,title,url,description))
-            # print(items[item])
             currentItem = 0   # mark that no item is in scope
             url = ""
             title = ""
@@ -249,16 +228,17 @@ def exportCSV(fname):
 ###############################################################################
 #  MAIN ROUTINE
 #
-#  python3 chomp.py f1 f2
+#  python3 chomp.py f1 [f2]
 #
 #  f1 = local file containing the rss feed in xml format
 #  f2 = output csv file.  It will be created if it doesn't exist.  It will be
 #       updated if it does exist.
 ###############################################################################
-if len(sys.argv) < 3:
-    sys.exit("You need to supply the file name to be parsed and the output file name.")
+if len(sys.argv) < 2:
+    sys.exit("You need to supply the file name to be parsed. The output file is optional.")
 
 try:
+    print("Opening: " +sys.argv[1])
     with open(sys.argv[1]) as f:
         for line in f:
             lineno += 1
@@ -268,8 +248,6 @@ try:
 except OSError as err:
     sys.exit("error opening/reading {}: {}".format(sys.argv[1],err))
 
-
-
 # exportCSV(sys.argv[2])
 updateDB();
-print("Exported {} rows".format(len(items)))
+print("New records: {}\nDuplicates: {}\n".format(newrecs-duplicates, duplicates))

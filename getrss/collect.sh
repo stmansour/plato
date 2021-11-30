@@ -116,7 +116,8 @@ function process() {
 # cleanup - remove temp files
 #---------------------------------------------------------------------------
 function cleanup() {
-    rm -f "${TMPRSS}"
+    # rm -f "${TMPRSS}"
+    echo ""
 }
 
 # main routine...
