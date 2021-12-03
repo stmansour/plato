@@ -106,4 +106,4 @@ echo 'done' >> ${OUT}
 chmod +x ${OUT}
 
 # When we have the disk space... uncomment the next line...
-./doit.sh
+# ./doit.sh
