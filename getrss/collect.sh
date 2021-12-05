@@ -109,7 +109,7 @@ FEOF
 function process() {
     echo "retrieving from: ${1}"
     curl -s "${1}" -o "${TMPRSS}"
-    echo "will execute:  python3 chomp.py ${1} ${TMPRSS} ${OUTFILE} "
+    # echo "will execute:  python3 chomp.py ${1} ${TMPRSS} ${OUTFILE} "
     python3 chomp.py "${1}" "${TMPRSS}" "${OUTFILE}"
 }
 

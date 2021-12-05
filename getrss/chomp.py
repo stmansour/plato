@@ -41,7 +41,6 @@ def processFeedName(f):
     cursor = cnx.cursor()
 
     q = 'SELECT RSSID FROM RSSFeed WHERE URL = "{}";'.format(f)
-    print("q = " + q)
     cursor.execute(q)
     rows = cursor.fetchall()
 
@@ -65,7 +64,7 @@ def processFeedName(f):
             print("db error on RSSFeed insert: " + str(err))
             sys.exit("error writing to db")
 
-    RSSID = rows[0]
+    RSSID = rows[0][0]
     print("Processing articles from RSSID = {} - {} ({})".format(RSSID,feedname,f))
 
 
