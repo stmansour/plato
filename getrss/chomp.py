@@ -22,9 +22,6 @@ rssfeed = ""        # name of rssfeed from which Items came.
 UID = -99997        # chomp.py program
 RSSID = 0           # ID of the RSSFeed for the articles being processed
 
-add_item = ("INSERT INTO Item "
-            "(Title, Description, PubDt, Link, CreateBy, LastModBy) "
-            "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s, %(CreateBy)s, %(LastModBy)s)")
 
 
 # processFeedName -
@@ -117,6 +114,12 @@ def updateDB(feed):
     #------------------------------------------------
     processFeedName(feed)
 
+    add_item = ("INSERT INTO Item "
+                "(Title, Description, PubDt, Link, CreateBy, LastModBy) "
+                "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s, %(CreateBy)s, %(LastModBy)s)")
+    add_itemfeed = ("INSERT INTO ItemFeed "
+                    "(IID,RSSID)"
+                    "VALUES (%(IID)s, %(RSSID)s)")
     for i in items:
         #-----------------------------------------------------
         # never write the same article out twice...
@@ -141,6 +144,23 @@ def updateDB(feed):
             try:
                 newrecs = newrecs + 1
                 cursor.execute(add_item,rec)
+                q = 'SELECT IID FROM Item WHERE Link="{}"'.format(i[3])
+                cursor.execute(q)
+                rows = cursor.fetchall()
+                if rows == 0:
+                    print("Could not read back Item after writing it!")
+                    sys.exit("Could not find Item just written")
+                IID = rows[0][0]
+                itemfeed = {
+                    'IID' : IID,
+                    'RSSID' : RSSID,
+                }
+                try:
+                    cursor.execute(add_itemfeed,itemfeed)
+                except mysql.connector.Error as err:
+                    print("Error writing ItemFeed: " + str(err))
+                    sys.exit("Failed to write ItemFeed")
+                    
             except mysql.connector.Error as err:
                 s = str(err)
                 idx = s.find("Duplicate entry")
