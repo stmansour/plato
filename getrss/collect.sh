@@ -14,7 +14,6 @@ declare -a urls=(
   "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
 
   "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
-  "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml"
@@ -110,7 +109,8 @@ FEOF
 function process() {
     echo "retrieving from: ${1}"
     curl -s "${1}" -o "${TMPRSS}"
-    python3 chomp.py "${TMPRSS}" "${OUTFILE}"
+    echo "will execute:  python3 chomp.py ${1} ${TMPRSS} ${OUTFILE} "
+    python3 chomp.py "${1}" "${TMPRSS}" "${OUTFILE}"
 }
 
 # cleanup - remove temp files

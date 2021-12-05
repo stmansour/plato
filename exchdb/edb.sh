@@ -363,7 +363,7 @@ ProcessExch () {
         else
             attempt=$(( 1 + retries ))
             echo "Retry attempt ${attempt}"
-            sleep 5
+            sleep 2
         fi
     done
     if (( SUCCESS != 1 )); then

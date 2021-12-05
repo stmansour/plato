@@ -5,7 +5,7 @@ import sys
 import os.path
 import mysql.connector
 from mysql.connector import errorcode
-
+from urllib import parse
 
 item = 0            # Global highest item number processed
 currentItem = 0     # Global current item number
@@ -18,16 +18,68 @@ items = []          # the list of items that are created
 cnx = None
 duplicates = 0      # keep track of the number of duplicate entries
 newrecs = 0         # keep track of the number of writes
+rssfeed = ""        # name of rssfeed from which Items came.
+UID = -99997        # chomp.py program
+RSSID = 0           # ID of the RSSFeed for the articles being processed
 
 add_item = ("INSERT INTO Item "
             "(Title, Description, PubDt, Link, CreateBy, LastModBy) "
             "VALUES (%(Title)s, %(Description)s, %(PubDt)s, %(Link)s, %(CreateBy)s, %(LastModBy)s)")
 
 
-def updateDB():
+# processFeedName -
+#   1. Extract the feedname from the rssfeed url
+#   2. If database already has this feed pull get its RSSID
+#   3. If the feed does not yet exist, add it
+#
+#------------------------------------------------------------------------------
+def processFeedName(f):
+    global RSSID
+    print("calling parse.urlsplit on: {}".format(f))
+    rssfeed = parse.urlsplit(f)  # break up the URL into its component pieces
+    feedname = os.path.splitext(os.path.basename(rssfeed.path))[0]  # basefilename minus extension is feedname
+    cursor = cnx.cursor()
+
+    q = 'SELECT RSSID FROM RSSFeed WHERE URL = "{}";'.format(f)
+    print("q = " + q)
+    cursor.execute(q)
+    rows = cursor.fetchall()
+
+    if len(rows) == 0:
+        add_feed = ("INSERT INTO RSSFeed" "(URL,LastModBy,CreateBy)" "VALUES (%(URL)s, %(CreateBy)s, %(LastModBy)s)")
+        UID = -99997  # chomp.py program
+        rec = {
+            'URL' : f,
+            'CreateBy': UID,
+            'LastModBy': UID,
+        }
+        try:
+            cursor2 = cnx.cursor()
+            cursor2.execute(add_feed,rec)
+            cursor2.execute(q)
+            rows = cursor2.fetchall()
+            if len(rows) == 0:
+                print("could not read back RSSID after write!")
+                sys.exit("error reading back new RSSID after write")
+        except mysql.connector.Error as err:
+            print("db error on RSSFeed insert: " + str(err))
+            sys.exit("error writing to db")
+
+    RSSID = rows[0]
+    print("Processing articles from RSSID = {} - {} ({})".format(RSSID,feedname,f))
+
+
+#-------------------------------------------------------------------------------
+# updateDB - writes items to the database
+#
+# INPUTS
+# f = rssfeed name
+#-------------------------------------------------------------------------------
+def updateDB(feed):
     global cnx
     global duplicates
     global newrecs
+    global RSSID
     dups = {}
     UID = -99998
 
@@ -60,6 +112,11 @@ def updateDB():
         else:
             print(err)
         sys.exit()
+
+    #------------------------------------------------
+    # First thing to do is set the RSSFeed...
+    #------------------------------------------------
+    processFeedName(feed)
 
     for i in items:
         #-----------------------------------------------------
@@ -228,26 +285,27 @@ def exportCSV(fname):
 ###############################################################################
 #  MAIN ROUTINE
 #
-#  python3 chomp.py f1 [f2]
+#  python3 chomp.py rssfeed f1 [f2]
 #
-#  f1 = local file containing the rss feed in xml format
-#  f2 = output csv file.  It will be created if it doesn't exist.  It will be
-#       updated if it does exist.
+#  sys.argv[1]: rssfeed = name of rssfeed supplying these articles
+#  sys.argv[2]: f1 = local file containing the rss feed in xml format
+#  sys.argv[3]: f2 = output csv file.  It will be created if it doesn't exist.
+#               It will be created if it does exist.
 ###############################################################################
-if len(sys.argv) < 2:
-    sys.exit("You need to supply the file name to be parsed. The output file is optional.")
+if len(sys.argv) < 3:
+    sys.exit("You must supply the rssfeed name and the file to be parsed.\nThe output file is optional.")
 
 try:
-    print("Opening: " +sys.argv[1])
-    with open(sys.argv[1]) as f:
+    print("Opening: " +sys.argv[2])
+    with open(sys.argv[2]) as f:
         for line in f:
             lineno += 1
             # print("{}: {}".format(lineno,line.rstrip()))
             processLine(line)
         f.close()
 except OSError as err:
-    sys.exit("error opening/reading {}: {}".format(sys.argv[1],err))
+    sys.exit("error opening/reading {}: {}".format(sys.argv[2],err))
 
 # exportCSV(sys.argv[2])
-updateDB();
+updateDB(sys.argv[1]);
 print("New records: {}\nDuplicates: {}\n".format(newrecs-duplicates, duplicates))
