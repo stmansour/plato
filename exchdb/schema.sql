@@ -6,8 +6,8 @@
 DROP DATABASE IF EXISTS plato;
 CREATE DATABASE plato;
 USE plato;
-GRANT ALL PRIVILEGES ON plato.* TO 'ec2-user'@'localhost';
-GRANT ALL PRIVILEGES ON plato.* TO 'adbuser'@'%';
+-- GRANT ALL PRIVILEGES ON plato.* TO 'ec2-user'@'localhost';
+-- GRANT ALL PRIVILEGES ON plato.* TO 'adbuser'@'%';
 set GLOBAL sql_mode='ALLOW_INVALID_DATES';
 
 
@@ -43,7 +43,7 @@ CREATE TABLE Item (
 
 CREATE TABLE RSSFeed (
     RSSID BIGINT NOT NULL AUTO_INCREMENT,                   -- unique id for this record
-    URL VARCHAR(1024) NOT NULL DEFAULT '',                  -- link to the RSS Feed
+    URL VARCHAR(512) NOT NULL DEFAULT '',                  -- link to the RSS Feed
     FLAGS BIGINT NOT NULL DEFAULT 0,                        -- no flags defined yet
     LastModTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  -- when was this record last written
     LastModBy BIGINT NOT NULL DEFAULT 0,                    -- employee UID (from phonebook) that modified it

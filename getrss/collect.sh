@@ -113,6 +113,20 @@ function process() {
     python3 chomp.py "${1}" "${TMPRSS}" "${OUTFILE}"
 }
 
+#-------------------------------------------------------------------------------
+#  init - Perform all initialization needed.
+#       To connect to the "plato" database, we need to have SonicWall running.
+#-------------------------------------------------------------------------------
+init () {
+    Trace "Entering init"
+    if [ ! -f config.json ]; then
+        jfrog rt dl accord/misc/confdev.json
+        mv misc/confdev.json .; cp confdev.json config.json
+        rm -rf misc
+    fi
+    Trace "Exiting init"
+}
+
 # cleanup - remove temp files
 #---------------------------------------------------------------------------
 function cleanup() {
@@ -143,6 +157,7 @@ if [[ "#{@}" != "0" ]]; then
             exit 0
             ;;
         *)
+            init
             process "${url}"
             DONE=1
             ;;
@@ -157,5 +172,6 @@ fi
 #----------------------------------------------------------------
 # If no urls were supplied, use our internal list
 #----------------------------------------------------------------
+init
 main
 cleanup

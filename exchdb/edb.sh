@@ -357,7 +357,7 @@ ProcessExch () {
     #---------------------------------------------------------------------
     SUCCESS=0
     for (( retries=0; retries<3; retries++ )); do
-        if curl --fail-with-body -s "${URL}" -o "${FNAME}"; then
+        if curl --fail -s "${URL}" -o "${FNAME}"; then
             retries=3
             SUCCESS=1
         else
@@ -385,15 +385,20 @@ ProcessExch () {
 #-------------------------------------------------------------------------------
 Init () {
     Trace "Entering Init"
-    AccordNAS=$(grep PlatoDbhost config.json | sed 's/"PlatoDbhost": "//' | sed 's/",//' | grep "10.101.0.13" | wc -l)
-    if (( AccordNAS > 0 )); then
-        SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
-        if (( SONIC < 2 )); then
-            "/Applications/SonicWall Mobile Connect.app/Contents/MacOS/SonicWall Mobile Connect" &
-            echo "Please open the connection to Accord's Mariadb, then try again"
-            exit 0
-        fi
+    if [ ! -f config.json ]; then
+        jfrog rt dl accord/misc/confdev.json
+        mv misc/confdev.json .; cp confdev.json config.json
+        rm -rf misc
     fi
+    # AccordNAS=$(grep PlatoDbhost config.json | sed 's/"PlatoDbhost": "//' | sed 's/",//' | grep "10.101.0.13" | wc -l)
+    # if (( AccordNAS > 0 )); then
+    #     SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
+    #     if (( SONIC < 2 )); then
+    #         "/Applications/SonicWall Mobile Connect.app/Contents/MacOS/SonicWall Mobile Connect" &
+    #         echo "Please open the connection to Accord's Mariadb, then try again"
+    #         exit 0
+    #     fi
+    # fi
     Trace "Exiting Init"
 }
 #-------------------------------------------------------------------------------
