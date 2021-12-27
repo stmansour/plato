@@ -36,3 +36,4 @@ while i < l:
         hits = hits + 1
         print(f'{hits}\t{d} v1={v1}  v2={v2} delta={delta}, threshold={threshold}')
     i = i+1
+print(f"total anomolies found: {hits}")

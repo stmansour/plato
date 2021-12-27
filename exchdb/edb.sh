@@ -25,6 +25,7 @@ OFFSET=86400    # seconds per day
 OS=$(uname)     # we need this because of quirks with Mac OS date(1)
 DEBUG=0
 KEEP=0
+URLERRLIST="urlerrlist.txt"
 
 #-------------------------------------------------------------------------------
 #  Today  -  set the start and stop dates to pull today's information
@@ -368,7 +369,8 @@ ProcessExch () {
     done
     if (( SUCCESS != 1 )); then
         echo "Problem downloading ${URL}.  Attempted to download 3 times"
-        exit 1
+        echo "Logging this URL to ${URLERRLIST}"
+        echo "${MONTH}/${DAY}/${YEAR}  :  ${URL}" >> "${URLERRLIST}"
     fi
     unzip -qq "${FNAME}"
     echo -n "..."

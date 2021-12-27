@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
 declare -a urls=(
-  "https://feeds.a.dj.com/rss/RSSOpinion.xml"
-  "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
-  "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
-  "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
-  "https://feeds.a.dj.com/rss/RSSWSJD.xml"
-  "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
-
-  "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+#  "https://feeds.a.dj.com/rss/RSSOpinion.xml"
+  # "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
+  # "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
+  # "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+  # "https://feeds.a.dj.com/rss/RSSWSJD.xml"
+  # "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
+  #
   "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml"
@@ -65,15 +64,29 @@ declare -a urls=(
   "https://rss.nytimes.com/services/xml/rss/nyt/MostShared.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/MostViewed.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/sunday-review.xml"
-
 )
 
-DEST="/Volumes/Extreme Pro/rss/nytimes"
+DEST="/Volumes/Plato/rss"
 DTSTART="20110202"
+DOWNLOADED="completed.txt"
+echo "URLS downloaded to disk during this run:" > ${DOWNLOADED}
 
 for url in "${urls[@]}"; do
-    mkdir -p "${DEST}"
-    waybackpack "${url}" --from-date "${DTSTART}" -d "${DEST}"
-    ./unpack.sh
     rm -rf "${DEST}"
+    mkdir -p "${DEST}"
+    RETRIES=0
+    while (( RETRIES < 3 )); do
+        waybackpack "${url}" --max-retries 3 --from-date "${DTSTART}" -d "${DEST}"
+        if [ $? -eq 0 ]; then
+            RETRIES=3
+        else
+            ((RETRIES += 1))
+            sleep 10
+        fi
+    done
+    echo -n "${url} " >> ${DOWNLOADED}
+    echo "Ready to call unpack.sh \"${url}\" \"${DEST}\""
+    # exit 0    # this is temporary... just need to debug and make sure everything works.
+    ./unpack.sh "${url}" "${DEST}"
+    echo "finished" >> ${DOWNLOADED}
 done

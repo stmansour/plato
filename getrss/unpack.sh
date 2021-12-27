@@ -1,5 +1,12 @@
 #!/bin/bash
 #
+# USAGE:
+#       bash$  ./unpack.sh RSSFeed baseDirName
+#
+# INPUTS:
+#       RSSFeed - the url of the RSSFeed where the files in baseDirName came from
+#       baseDirName = the name of the directory containing all the directories
+#                     with xmlfeed files.
 #=============================================================================
 
 TMPRSS="tmprss"
@@ -79,31 +86,40 @@ while getopts "dh" o; do
 done
 shift $((OPTIND-1))
 
-echo "arg = ${1}"
-urls=$(find "${1}" -name "*.xml")
-for i in "${urls[@]}"; do
-    echo "i = ${i}"
-    # pause
-    python3 chomp.py "${i}"
-done
+# echo "arg = ${1}"
+# urls=$(find "${1}" -name "*.xml")
+# for i in "${urls[@]}"; do
+#     echo "i = ${i}"
+#     # pause
+#     python3 chomp.py "${i}"
+# done
 
 OUT="doit.sh"
+RSSFEED="${1}"
+BASEDIR="${2}"
+echo "RSSFEED = ${RSSFEED} , BASEDIR = ${BASEDIR}"
 
 cat >${OUT} <<EOF
 #!/bin/bash
+RSSFEED="${RSSFEED}"
+BASEDIR="${BASEDIR}"
 declare a=(
 EOF
 
-find "${1}" -name "*.xml" | sed 's/^/"/' | sed 's/$/"/' >> ${OUT}
+find "${BASEDIR}" -name "*.xml" | sed 's/^/"/' | sed 's/$/"/' >> ${OUT}
 
 echo ')'  >> ${OUT}
 echo 'for i in "${a[@]}"; do' >> ${OUT}
 echo 'echo $i' >> ${OUT}
 echo 'xmllint --format - < "${i}"  >x' >> ${OUT}
-echo 'python3 chomp.py x' >> ${OUT}
+echo "python3 chomp.py \"${RSSFEED}\" x" >> ${OUT}
 echo 'done' >> ${OUT}
 
 chmod +x ${OUT}
 
 # When we have the disk space... uncomment the next line...
-# ./doit.sh
+echo -n "Execute doit.sh at "
+date
+./doit.sh
+echo
+echo -n "./doit.sh completed at "

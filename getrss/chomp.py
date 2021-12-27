@@ -7,6 +7,17 @@ import mysql.connector
 from mysql.connector import errorcode
 from urllib import parse
 
+###############################################################################
+#  chomp.py
+#
+#  USAGE:
+#  bash$ python3 chomp.py rssfeed f1 [f2]
+#
+#  INPUTS:
+#  rssfeed = the url used to load the RSS Feed
+#  f1      - the xml rss file to be parsed
+#  f2      - optional - the name of the csv file that should be written out.
+###############################################################################
 item = 0            # Global highest item number processed
 currentItem = 0     # Global current item number
 lineno = 0          # Global line number of input file
@@ -160,7 +171,7 @@ def updateDB(feed):
                 except mysql.connector.Error as err:
                     print("Error writing ItemFeed: " + str(err))
                     sys.exit("Failed to write ItemFeed")
-                    
+
             except mysql.connector.Error as err:
                 s = str(err)
                 idx = s.find("Duplicate entry")
@@ -325,6 +336,8 @@ try:
 except OSError as err:
     sys.exit("error opening/reading {}: {}".format(sys.argv[2],err))
 
+# removed for now because we really want this information in a database
 # exportCSV(sys.argv[2])
+
 updateDB(sys.argv[1]);
 print("New records: {}\nDuplicates: {}\n".format(newrecs-duplicates, duplicates))
