@@ -66,12 +66,94 @@ declare -a urls=(
   "https://rss.nytimes.com/services/xml/rss/nyt/sunday-review.xml"
 )
 
+#-------------------------------------------------------------------------------
+#  usage  -  Display information explaining how to use this script
+#-------------------------------------------------------------------------------
+usage() {
+    PROGNAME="wbp.sh"
+    cat <<ZZEOF
+
+WayBackPack RSS Feed Collector
+
+    Usage:   ${PROGNAME} [OPTIONS]
+
+    This command updates a mysql database named "plato" based on the OPTIONS
+    provided in the run command.  If no OPTIONS are specified, then it will
+    update every RSS Feed from its internal list based on the internal DTSTART
+    value (currently set to ${DTSTART}).
+
+OPTIONS:
+    (currently there are no options)
+
+CMD:
+    CMD is one of the following:
+
+    -u, -update, u, update
+        Bring the database up-to-date by filling in all the data starting from
+        the latest date found in the Items table and ending on today's date.
+
+EXAMPLES:
+    Command to update plato database with all articles since ${DTSTART}:
+
+        bash$  ./${PROGNAME}
+
+    Command to start ${PROGNAME} and update all RSS feeds with articles that
+    have been released since the last time this script was run:
+
+    	bash$  ./${PROGNAME} update
+
+ZZEOF
+}
+
+#-------------------------------------------------------------------------------
+#  GetUpdateDates  -  query the database for the latest date in the Exch table
+#                     then set the range to cover from that date to the current
+#                     date
+#-------------------------------------------------------------------------------
+SetUpdateStartDate () {
+    DTSTART=$(echo "SELECT PubDt FROM Item ORDER BY PubDt DESC limit 1;" | mysql plato | grep -v PubDt | sed 's/ .*//' | sed 's/-//g')
+}
+
+#-------------------------------------------------------------------------------
+#  INIIALIZE...
+#-------------------------------------------------------------------------------
 DEST="/Volumes/Plato/rss"
 # DTSTART="20110202"  # Use this date to start from scratch
 DTSTART="20211223"
 DOWNLOADED="completed.txt"
 echo "URLS downloaded to disk during this run:" > ${DOWNLOADED}
+MYSQL=$(which mysql)
+if [ "x" == "${MYSQL}x" ]; then
+    echo "mysql command not found. Ensure that mysql is installed an in your PATH then try again."
+    exit 1
+fi
+MYSQL="${MYSQL} --no-defaults"
 
+#-------------------------------------------------------------------------------
+#  Handle command line args...
+#-------------------------------------------------------------------------------
+for arg do
+	# echo '--> '"\`$arg'"
+	cmd=$(echo "${arg}" |tr "[:upper:]" "[:lower:]")
+    case "$cmd" in
+    "help" | "h" | "-h" | "-help")
+        usage
+        exit 0
+        ;;
+    "-u" | "-update" | "u" | "update")
+            SetUpdateStartDate
+            ;;
+	*)  #invalid argument
+		echo "Unrecognized command: $arg"
+		usage
+		exit 1
+		;;
+    esac
+done
+
+#-------------------------------------------------------------------------------
+#  On with it!
+#-------------------------------------------------------------------------------
 for url in "${urls[@]}"; do
     rm -rf "${DEST}"
     mkdir -p "${DEST}"

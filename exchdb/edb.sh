@@ -265,12 +265,19 @@ Foreign Exchange Database Creator
 
     Usage:   ${PROGNAME} [OPTIONS] CMD
 
-    This command removes a mysql database named "plato" and create a new one
-    based on the configuration parameters in Initialize. If no options are
-    provided then
+    This command updates a mysql database named "plato" based on the
+    CMD and OPTIONS provided on the run command. If no options are provided then
+    the "today" option is assumed.
+
+    The newdb option will wipe out an existing database, so use it with
+    caution.
 
 OPTIONS:
-    (currently there are no options)
+    d, debug, -d, -debug
+        Set debug m ode. Trace statements output to the screen.
+
+    kdf
+        Do not remove (keep) the downloaded file.  Used for debugging.
 
 CMD:
     CMD is one of the following:
@@ -283,14 +290,8 @@ CMD:
         Use this command to remove any temporary files that the script
         creates during a run operation.
 
-    d, debug, -d, -debug
-        Set debug mode. Trace statements output to the screen.
-
     help
         Prints this text.
-
-    kdf
-        Do not remove (keep) the downloaded file.  Used for debugging.
 
     newdb
         Delete the old database and start a new one.  Note this will destroy
@@ -313,6 +314,11 @@ EXAMPLES:
     Command to update plato database with today's information:
 
         bash$  ./${PROGNAME}
+
+    Command to update plato database with all information since the last time
+    this script was run:
+
+        bash$  ./${PROGNAME} update
 
     Command to start ${PROGNAME}, remove the old exch database and create a new
     one:
@@ -500,11 +506,6 @@ Main () {
 }
 
 #===========================================================================
-
-#---------------------------------------------------------------------
-# build a URL of the form:
-#      https://www.forexite.com/free_forex_quotes/2001/11/011101.zip
-#---------------------------------------------------------------------
 
 for arg do
 	# echo '--> '"\`$arg'"
