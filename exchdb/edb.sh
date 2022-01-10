@@ -221,7 +221,7 @@ SetGetAllDates () {
 }
 
 #-------------------------------------------------------------------------------
-#  GetAllData  -  query the user for the date range to collect
+#  GetRangeDates  -  query the user for the date range to collect
 #-------------------------------------------------------------------------------
 GetRangeDates () {
     Trace "GetRangeDates"
@@ -229,6 +229,21 @@ GetRangeDates () {
     SetTodayAsStop
     STARTDATE=$(QueryUserForDateString "Start date" "${STARTDATE}")
     STOPDATE=$(QueryUserForDateString "Stop date (up-to-but-not-including)" "${STOPDATE}")
+    FinalizeDateRange
+}
+
+#-------------------------------------------------------------------------------
+#  GetUpdateDates  -  query the database for the latest date in the Exch table
+#                     then set the range to cover from that date to the current
+#                     date
+#-------------------------------------------------------------------------------
+GetUpdateDates () {
+    Trace "GetUpdateDates"
+    SetTodayAsStop
+    STARTDATE=$(echo "SELECT Dt FROM Exch ORDER BY Dt DESC limit 1;" | ${MYSQL} plato | grep -v Dt | sed 's/ .*//')
+    STARTYEAR=$(echo "${STARTDATE}" | sed 's/\(....\).*/\1/')
+    STARTMONTH=$(echo "${STARTDATE}" | sed 's/....-\([^-][^-]*\)-.*/\1/')
+    STARTDAY=$(echo "${STARTDATE}" | sed 's/....-..-\(..\).*/\1/')
     FinalizeDateRange
 }
 
@@ -268,6 +283,9 @@ CMD:
         Use this command to remove any temporary files that the script
         creates during a run operation.
 
+    d, debug, -d, -debug
+        Set debug mode. Trace statements output to the screen.
+
     help
         Prints this text.
 
@@ -286,6 +304,10 @@ CMD:
     today, t, -today, -t
         Update the database with today's information. For table Exch, this means
         adding all the exchange rate information for yesterday.
+
+    -u, -update, u, update
+        Bring the database up-to-date by filling in all the data starting from
+        the latest date found in the Exch table and ending on today's date.
 
 EXAMPLES:
     Command to update plato database with today's information:
@@ -392,6 +414,13 @@ Init () {
         mv misc/confdev.json .; cp confdev.json config.json
         rm -rf misc
     fi
+
+    MYSQL=$(which mysql)
+    if [ "x" == "${MYSQL}x" ]; then
+        echo "mysql command not found. Ensure that mysql is installed an in your PATH then try again."
+        exit 1
+    fi
+    MYSQL="${MYSQL} --no-defaults"
     # AccordNAS=$(grep PlatoDbhost config.json | sed 's/"PlatoDbhost": "//' | sed 's/",//' | grep "10.101.0.13" | wc -l)
     # if (( AccordNAS > 0 )); then
     #     SONIC=$(ps -ef | grep "SonicWall Mobile Connect" | grep -vc grep)
@@ -403,6 +432,7 @@ Init () {
     # fi
     Trace "Exiting Init"
 }
+
 #-------------------------------------------------------------------------------
 #  Main  -  Pull data STARTDATE to ENDDATE. Information
 #       for all Tickers is provided in the files we get from the URL. The
@@ -415,6 +445,8 @@ Main () {
         Today
     elif [[ "${MODE}" == "range" ]]; then
         GetRangeDates
+    elif [[ "${MODE}" == "update" ]]; then
+        GetUpdateDates
     elif [[ "${MODE}" == "all" ]]; then
         SetGetAllDates
     else
@@ -521,6 +553,9 @@ for arg do
     "range" | "r" | "-range" | "-r")
         MODE="range"
         ;;
+    "-u" | "-update" | "u" | "update")
+            MODE="update"
+            ;;
 	*)  #invalid argument
 		echo "Unrecognized command: $arg"
 		usage

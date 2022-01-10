@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 declare -a urls=(
-#  "https://feeds.a.dj.com/rss/RSSOpinion.xml"
-  # "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
-  # "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
-  # "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
-  # "https://feeds.a.dj.com/rss/RSSWSJD.xml"
-  # "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
-  #
+  "https://feeds.a.dj.com/rss/RSSOpinion.xml"
+  "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
+  "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
+  "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+  "https://feeds.a.dj.com/rss/RSSWSJD.xml"
+  "https://feeds.a.dj.com/rss/RSSLifestyle.xml"
+
   "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
   "https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml"
@@ -67,7 +67,8 @@ declare -a urls=(
 )
 
 DEST="/Volumes/Plato/rss"
-DTSTART="20110202"
+# DTSTART="20110202"  # Use this date to start from scratch
+DTSTART="20211223"
 DOWNLOADED="completed.txt"
 echo "URLS downloaded to disk during this run:" > ${DOWNLOADED}
 

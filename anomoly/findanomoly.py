@@ -18,22 +18,27 @@ except mysql.connector.Error as err:
         print(err)
     sys.exit()
 
-#                      [0] [1] [2]
-cursor.execute('SELECT XID,Dt,Close FROM Exch WHERE Ticker="AUDUSD" AND MINUTE(Dt)=0 AND HOUR(Dt)=0' )
+#                      [0] [1]
+Ticker = "AUDUSD"
+query = 'SELECT Dt,Close FROM Exch WHERE Ticker="{}" AND MINUTE(Dt)=0 AND HOUR(Dt)=0'.format(Ticker)
+cursor.execute(query)
 rows = cursor.fetchall()
 l = len(rows) - 1
+
+Ticker = "AUDUSD"
+Threshold = float(0.02)  # that is, 2%
 
 hits = 0    # number of anomlies that matched our criteria
 i = 0       # counter
 while i < l:
-    v1 = rows[i][2]     # Closing value on dt
-    v2 = rows[i+1][2]   # Closing value on dt + 1day
-    dt = rows[i][1]     # datetime of this record (midnight each day)
+    v1 = rows[i][1]     # Closing value on dt
+    v2 = rows[i+1][1]   # Closing value on dt + 1day
+    dt = rows[i][0]     # datetime of this record (midnight each day)
     delta = abs(v2-v1)  # difference between this record and the next record's closing exch rate
-    threshold = v1/100; # 1% of this row's closing exchange rate
-    if  delta > threshold:
+    thresh = float(v1) * Threshold; # 1% of this row's closing exchange rate
+    if  delta > thresh:
         d = dt.strftime("%b %d, %Y")
         hits = hits + 1
-        print(f'{hits}\t{d} v1={v1}  v2={v2} delta={delta}, threshold={threshold}')
+        print('{}\t{} v1={}  v2={} delta={}, Threshold={:.4f}'.format(hits,d,v1,v2,delta,thresh))
     i = i+1
 print(f"total anomolies found: {hits}")
